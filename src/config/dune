@@ -1,0 +1,21 @@
+(executable
+ (name create_ocaml_from_file)
+ (modules create_ocaml_from_file)
+ ; No PPX! Since this is core to DKML this should compile with the bare minimum
+ ; Diskuv OCaml dependencies from the `system` switch
+ (libraries astring))
+
+(rule
+ (target dkml_compiler_probe_c_header.ml)
+ (deps
+  (:create_ml_from create_ocaml_from_file.exe)
+  (:header dkml_compiler_probe.h))
+ (action
+  (with-stdout-to
+   %{target}
+   (run %{create_ml_from} %{header}))))
+
+(executable
+ (name discover)
+ (modules discover dkml_compiler_probe_c_header)
+ (libraries dune.configurator))

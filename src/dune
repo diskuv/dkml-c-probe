@@ -1,0 +1,14 @@
+(rule
+ (targets c_abi.ml)
+ (action
+  (run config/discover.exe)))
+
+(library
+ (name dkml_c_probe)
+ (public_name dkml-c-probe)
+ (modules c_abi)
+ (libraries rresult))
+
+(install
+ (files config/dkml_compiler_probe.h)
+ (section share))
