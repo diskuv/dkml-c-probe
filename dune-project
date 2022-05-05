@@ -2,6 +2,8 @@
 (name dkml-c-probe)
 (version 2.0.0~prerel1)
 
+(using mdx 0.1)
+
 (generate_opam_files true)
 
 (source
@@ -18,4 +20,5 @@
  (description "Using the C compiler of ocamlopt -config, which may be a cross-compiler, vends an OCaml module with enumerations of the target operating system and ABI, and a C header that introspects the same at compile time")
  (depends
   (ocaml (>= 4.12.1))
-  (rresult (>= 0.6.0))))
+  (rresult (>= 0.6.0))
+  (dune-configurator (and (>= 2.9) :build))))

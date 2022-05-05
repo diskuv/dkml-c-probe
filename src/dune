@@ -11,4 +11,4 @@
 
 (install
  (files config/dkml_compiler_probe.h)
- (section share))
+ (section lib))
