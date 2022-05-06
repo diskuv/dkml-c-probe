@@ -35,10 +35,15 @@ jobs:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: false
       - name: Install Opam dependencies
-        run: opam install . --deps-only --with-test
+        run: |
+          # There is a bug in dune.3.1.1. See https://github.com/diskuv/dkml-c-probe/runs/6316265329?check_suite_focus=true
+          opam pin dune -k version 2.9.3
+          opam install . --deps-only --with-test
       - name: Build OCaml
         run: opam exec -- dune build --display=short
       - name: Test OCaml
         run: opam exec -- dune runtest --display=short
+      - name: Install dkml-c-probe
+        run: opam exec -- dune install
       - name: Display Probe
         run: opam exec -- sh -c 'cat show_abi.ml | ocaml'
