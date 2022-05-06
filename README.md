@@ -1,8 +1,16 @@
 # dkml-c-probe
 
 Introspects OCaml's native C compiler to determine the ABI used by executables
-created by the C compiler. For example, if OCaml's native C compiler were
-the following on a Apple Intel x86_64 build machine:
+created by the C compiler. Designed to be used to simplify [Dune Configurator](https://dune.readthedocs.io/en/latest/dune-libs.html#configurator-1)
+code or [foreign C stub code](https://dune.readthedocs.io/en/latest/foreign-code.html).
+Since `dkml-c-probe` never runs executables created by the C compiler,
+`dkml-c-probe` is safe to use with cross-compilers.
+
+For example, let's say you had an Apple Intel x86_64 build machine with
+a OCaml ocamlfind cross-compiler toolchain for Apple Silicon. *This will
+be available soon from Opam: https://github.com/diskuv/dkml-compiler/blob/main/dkml-base-compiler.opam*
+
+OCaml will report:
 
 <!-- $MDX non-deterministic=command -->
 ```console
@@ -15,10 +23,44 @@ $ ocamlfind -toolchain darwin_arm64 ocamlopt -config
 native_c_compiler: clang -arch arm64
 ```
 
-then the ABI would be reported as `Darwin_x86_64` or `Darwin_arm64`
-by dkml-c-probe, depending on which toolchain was used.
+which would mean:
+
+```ocaml
+Lazy.force (Dkml_c_probe.C_abi.V2.get_platform ())
+```
+
+would result in `Ok Darwin_x86_64` or `Ok Darwin_arm64`, depending on which
+ocamlfind toolchain was used.
+
+[Dune Cross Compilation](https://dune.readthedocs.io/en/latest/cross-compilation.html)
+combined with [Opam Monorepo](https://github.com/ocamllabs/opam-monorepo#opam-monorepo)
+makes this simpler. On the same example machine you could do:
+
+```console
+$ dune build -x darwin_arm64
+```
+
+and it would compile both Apple Intel and Apple Silicon binaries. During the
+compilation of the Apple Intel binaries (Dune's "default" context) the
+`get_platform ()` would give `Ok Darwin_x86_64` while during the compilation of
+the Apple Silicon binaries (Dune's "default_arm64" context) it would give
+`Ok Darwin_arm64`.
+
+## Usage
+
+Install it with:
+
+```sh
+opam install dkml-c-probe
+```
+
+Then either:
+* Use the [OCaml Signature](#ocaml-signature) in your [Dune Configurator](https://dune.readthedocs.io/en/latest/dune-libs.html#configurator-1)
+* Use the [C Header](#c-header) in your [foreign C stub code](https://dune.readthedocs.io/en/latest/foreign-code.html)
 
 ## OCaml Signature
+
+OCaml API documentation is at http://diskuv.github.io/dkml-c-probe/
 
 ```console
 $ ocaml top.ml
@@ -51,7 +93,7 @@ module V2 :
 ## C Header
 
 The header file will be available as the following expressions:
-- `%{dkml-c-probe:share}%/dkml_compiler_probe.h` if you are in an `.opam` file
+- `%{dkml-c-probe:lib}%/dkml_compiler_probe.h` if you are in an `.opam` file
 - `%{lib:dkml-c-probe:dkml_compiler_probe.h}` if you are in a `dune` file
 
 <!-- $MDX file=dkml_compiler_probe.h -->
