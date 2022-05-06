@@ -40,17 +40,17 @@ type osinfo = {
 
 let get_osinfo t =
   let header =
-    let file = Filename.temp_file "discover" "os.h" in
+    let file = "discover_osinfo.h" in
     let fd = open_out file in
     output_string fd Dkml_compiler_probe_c_header.contents;
     close_out fd;
     file
   in
   let os_define =
-    C_define.import t ~includes:[ header ] [ ("DKML_OS_NAME", String) ]
+    C_define.import t ~c_flags:["-I"; Sys.getcwd ()] ~includes:[ header ] [ ("DKML_OS_NAME", String) ]
   in
   let platform_define =
-    C_define.import t ~includes:[ header ] [ ("DKML_ABI", String) ]
+    C_define.import t ~c_flags:["-I"; Sys.getcwd ()] ~includes:[ header ] [ ("DKML_ABI", String) ]
   in
 
   let ostypename =

@@ -6,7 +6,7 @@ on:
       - 'main'
 
 jobs:
-  build:
+  test-with-setup-ocaml:
     strategy:
       fail-fast: false
       matrix:
@@ -34,11 +34,11 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: false
+      # - name: Use fdopen repository (Windows)
+      #   if: ${{ startsWith(matrix.os, 'windows-') }}
+      #   run: opam repository set-url default 'git+https://github.com/fdopen/opam-repository-mingw.git#opam2'
       - name: Install Opam dependencies
-        run: |
-          # There is a bug in dune.3.1.1. See https://github.com/diskuv/dkml-c-probe/runs/6316265329?check_suite_focus=true
-          opam pin dune -k version 2.9.3
-          opam install . --deps-only --with-test
+        run: opam install . --deps-only --with-test
       - name: Build OCaml
         run: opam exec -- dune build --display=short
       - name: Test OCaml
