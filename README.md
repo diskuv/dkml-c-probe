@@ -206,4 +206,7 @@ The header file will be available as the following expressions:
 
 ## Contributions
 
-Head over to **[Your Contributions](CONTRIBUTORS.md)**.
+We are always looking for new ABIs! Each new ABI needs to have its own
+maintainer.
+
+If you are interested, head over to **[Your Contributions](CONTRIBUTORS.md)**.
