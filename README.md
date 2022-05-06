@@ -210,3 +210,9 @@ We are always looking for new ABIs! Each new ABI needs to have its own
 maintainer.
 
 If you are interested, head over to **[Your Contributions](CONTRIBUTORS.md)**.
+
+## Status
+
+| Status                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [![Syntax check](https://github.com/diskuv/dkml-c-probe/actions/workflows/test.yml/badge.svg)](https://github.com/diskuv/dkml-c-probe/actions/workflows/test.yml) |
