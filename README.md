@@ -25,6 +25,7 @@ native_c_compiler: clang -arch arm64
 
 which would mean:
 
+<!-- $MDX non-deterministic=command -->
 ```ocaml
 Lazy.force (Dkml_c_probe.C_abi.V2.get_platform ())
 ```
@@ -36,6 +37,7 @@ ocamlfind toolchain was used.
 combined with [Opam Monorepo](https://github.com/ocamllabs/opam-monorepo#opam-monorepo)
 makes this simpler. On the same example machine you could do:
 
+<!-- $MDX non-deterministic=command -->
 ```console
 $ dune build -x darwin_arm64
 ```
@@ -50,8 +52,9 @@ the Apple Silicon binaries (Dune's "default_arm64" context) it would give
 
 Install it with:
 
-```sh
-opam install dkml-c-probe
+<!-- $MDX non-deterministic=command -->
+```console
+$ opam install dkml-c-probe
 ```
 
 Then either:
@@ -63,7 +66,7 @@ Then either:
 OCaml API documentation is at http://diskuv.github.io/dkml-c-probe/
 
 ```console
-$ ocaml top.ml
+$ ocaml show_signature.ml
 module V2 = Dkml_c_probe.C_abi.V2
 module V2 :
   sig
