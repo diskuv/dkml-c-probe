@@ -127,6 +127,7 @@ let () =
       write_lines "c_abi.ml"
         [
           (* As you expand the list of platforms and OSes make new versions! Make sure the new platforms and OS give back Result.error in older versions. *)
+          {|(** New applications should use the {!V2} module instead. *)|};
           {|module V1 = struct|};
           {|  type ostype = Android | IOS | Linux | OSX | Windows|};
           {|  type platformtype =
@@ -154,6 +155,7 @@ let () =
             |> v1result_to_string |> to_lazy);
           {|end (* module V1 *) |};
           {||};
+          {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
           {|module V2 = struct|};
           {|  type ostype = Android | IOS | Linux | OSX | Windows|};
           {|  type platformtype =
