@@ -1,4 +1,4 @@
-name: Box Tests
+name: Tests
 
 on:
   push:
@@ -15,7 +15,6 @@ jobs:
           - ubuntu-latest
           - macos-latest
         ocaml-compiler:
-          - '4.08.0'
           - '4.13.x'
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }}-${{ matrix.ocaml-compiler }}

@@ -19,6 +19,8 @@
  (synopsis "Cross-compiler friendly characterizations of the OCaml's native C compiler")
  (description "Using the C compiler of ocamlopt -config, which may be a cross-compiler, vends an OCaml module with enumerations of the target operating system and ABI, and a C header that introspects the same at compile time")
  (depends
-  (ocaml (>= 4.12.1))
-  (rresult (>= 0.6.0))
+  (ocaml    (>= 4.12.1))
+  (rresult  (>= 0.6.0))
+  (astring  (>= 0.8.5))
+  (mdx      (and (>= 2.0.0) :with-test))
   (dune-configurator (and (>= 2.9) :build))))
