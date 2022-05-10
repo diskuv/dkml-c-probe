@@ -58,38 +58,42 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2019 # 2019 has Visual Studio 2019
-            host_target_abis: win32-windows_x86
+          - os: windows-2019
+            abi-pattern: win32-windows_x86
             dkml-host-abi: windows_x86
-            default_shell: msys2 {0}
             opam-root: D:/.opam
+            default_shell: msys2 {0}
+            msys2_system: CLANG32
+            msys2_packages: mingw-w64-clang-i686-pkg-config
             bits: "32"
-          - os: windows-2019 # 2019 has Visual Studio 2019
-            host_target_abis: win32-windows_x86_64
+          - os: windows-2019
+            abi-pattern: win32-windows_x86_64
             dkml-host-abi: windows_x86_64
-            default_shell: msys2 {0}
             opam-root: D:/.opam
+            default_shell: msys2 {0}
+            msys2_system: UCRT64
+            msys2_packages: mingw-w64-ucrt-x86_64-pkg-config
             bits: "64"
           - os: macos-latest
-            host_target_abis: macos-darwin_all
+            abi-pattern: macos-darwin_all
             dkml-host-abi: darwin_x86_64
             default_shell: sh
             opam-root: /Users/runner/.opam
             bits: "64"
           - os: ubuntu-latest
-            host_target_abis: manylinux2014-linux_x86
+            abi-pattern: manylinux2014-linux_x86
             bits: "32"
             default_shell: sh
             dkml-host-abi: linux_x86
             opam-root: .ci/opamroot # local directory of $GITHUB_WORKSPACE so available to dockcross
           - os: ubuntu-latest
-            host_target_abis: manylinux2014-linux_x86_64
+            abi-pattern: manylinux2014-linux_x86_64
             bits: "64"
             default_shell: sh
             dkml-host-abi: linux_x86_64
             opam-root: .ci/opamroot # local directory of $GITHUB_WORKSPACE so available to dockcross
     runs-on: ${{ matrix.os }}
-    name: test-dkml / ${{ matrix.host_target_abis }}
+    name: test-dkml / ${{ matrix.abi-pattern }}
     defaults:
       run:
         shell: ${{ matrix.default_shell }}
@@ -108,28 +112,23 @@ jobs:
         if: startsWith(matrix.dkml-host-abi, 'windows_')
         uses: msys2/setup-msys2@v2
         with:
-          msystem: UCRT64
+          msystem: ${{ matrix.msys2_system }}
           update: true
-          # 1. xz is not for OCaml; just to get opam64.tar.xz from fdopen
-          # 2. For Opam 2.0 from fdopen we need MSYS2/Cygwin tar that can handle
-          #    Unix paths like /tmp.
           install: >-
-            tree
+            ${{ matrix.msys2_packages }}
             wget
             make
-            pkg-config
             rsync
             diffutils
             patch
             unzip
             git
-            xz
             tar
 
       - name: Import build environments from setup-dkml
         run: |
           ${{ needs.setup-dkml.outputs.import_func }}
-          import ${{ matrix.host_target_abis }}
+          import ${{ matrix.abi-pattern }}
 
       - name: Cache Opam downloads by host
         uses: actions/cache@v2
