@@ -108,7 +108,7 @@ jobs:
         if: startsWith(matrix.dkml-host-abi, 'windows_')
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MSYS
+          msystem: UCRT64
           update: true
           # 1. xz is not for OCaml; just to get opam64.tar.xz from fdopen
           # 2. For Opam 2.0 from fdopen we need MSYS2/Cygwin tar that can handle
