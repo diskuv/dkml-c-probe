@@ -111,12 +111,12 @@ let () =
       let result_to_string = function
         | Result.Ok v -> "Result.ok (" ^ v ^ ")"
         | Result.Error e ->
-            "Result.error (Rresult.R.msg \"" ^ String.escaped e ^ "\")"
+            "Result.error (\"" ^ String.escaped e ^ "\")"
       in
       let v1result_to_string r =
         match (r, abiname) with
         | _, Result.Ok "linux_x86" ->
-            "Result.error (Rresult.R.msg \"linux_x86 platform is only \
+            "Result.error (\"linux_x86 platform is only \
              available in Target_context.V2 or later\")"
         | Result.Ok v, _ -> result_to_string (Result.ok v)
         | Result.Error e, _ -> result_to_string (Result.error e)
@@ -146,11 +146,11 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_os : (t_os, string) Result.t Lazy.t = |}
           ^ (v1result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_abi : (t_abi, string) Result.t Lazy.t = |}
           ^ (v1result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_abi_name : (string, string) Result.t Lazy.t = |}
           ^ (Result.map quote_string abiname
             |> v1result_to_string |> to_lazy);
           {|end (* module V1 *) |};
@@ -175,11 +175,11 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_os : (t_os, string) Result.t Lazy.t = |}
           ^ (result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_abi : (t_abi, string) Result.t Lazy.t = |}
           ^ (result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_abi_name : (string, string) Result.t Lazy.t = |}
           ^ (Result.map quote_string abiname |> result_to_string |> to_lazy);
           {|end (* module V2 *) |};
         ])

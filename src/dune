@@ -5,8 +5,7 @@
 
 (library
  (name dkml_c_probe)
- (public_name dkml-c-probe)
- (libraries rresult))
+ (public_name dkml-c-probe))
 
 (install
  (files config/dkml_compiler_probe.h)
