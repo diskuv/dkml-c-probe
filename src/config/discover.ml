@@ -17,7 +17,7 @@
 open Configurator.V1
 open Flags
 
-type platformtype =
+type t_abi =
   | Android_arm64v8a
   | Android_arm32v7a
   | Android_x86
@@ -34,8 +34,8 @@ type platformtype =
 
 type osinfo = {
   ostypename : (string, string) Result.t;
-  platformtypename : (string, string) Result.t;
-  platformname : (string, string) Result.t;
+  abitypename : (string, string) Result.t;
+  abiname : (string, string) Result.t;
 }
 
 let get_osinfo t =
@@ -49,7 +49,7 @@ let get_osinfo t =
   let os_define =
     C_define.import t ~c_flags:["-I"; Sys.getcwd ()] ~includes:[ header ] [ ("DKML_OS_NAME", String) ]
   in
-  let platform_define =
+  let abi_define =
     C_define.import t ~c_flags:["-I"; Sys.getcwd ()] ~includes:[ header ] [ ("DKML_ABI", String) ]
   in
 
@@ -66,8 +66,8 @@ let get_osinfo t =
          ^ Dkml_compiler_probe_c_header.filename)
   in
 
-  let platformtypename, platformname =
-    match platform_define with
+  let abitypename, abiname =
+    match abi_define with
     | [ (_, String ("android_arm64v8a" as x)) ] ->
         (Result.ok "Android_arm64v8a", Result.ok x)
     | [ (_, String ("android_arm32v7a" as x)) ] ->
@@ -103,18 +103,18 @@ let get_osinfo t =
          ^ Dkml_compiler_probe_c_header.filename)
   in
 
-  { ostypename; platformtypename; platformname }
+  { ostypename; abitypename; abiname }
 
 let () =
   main ~name:"discover" (fun t ->
-      let { ostypename; platformtypename; platformname } = get_osinfo t in
+      let { ostypename; abitypename; abiname } = get_osinfo t in
       let result_to_string = function
         | Result.Ok v -> "Result.ok (" ^ v ^ ")"
         | Result.Error e ->
             "Result.error (Rresult.R.msg \"" ^ String.escaped e ^ "\")"
       in
       let v1result_to_string r =
-        match (r, platformname) with
+        match (r, abiname) with
         | _, Result.Ok "linux_x86" ->
             "Result.error (Rresult.R.msg \"linux_x86 platform is only \
              available in Target_context.V2 or later\")"
@@ -129,8 +129,8 @@ let () =
           (* As you expand the list of platforms and OSes make new versions! Make sure the new platforms and OS give back Result.error in older versions. *)
           {|(** New applications should use the {!V2} module instead. *)|};
           {|module V1 = struct|};
-          {|  type ostype = Android | IOS | Linux | OSX | Windows|};
-          {|  type platformtype =
+          {|  type t_os = Android | IOS | Linux | OSX | Windows|};
+          {|  type t_abi =
               | Android_arm64v8a
               | Android_arm32v7a
               | Android_x86
@@ -146,19 +146,19 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (ostype, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_os : (t_os, Rresult.R.msg) Result.t Lazy.t = |}
           ^ (v1result_to_string ostypename |> to_lazy);
-          {|  let get_platform : (platformtype, Rresult.R.msg) Result.t Lazy.t = |}
-          ^ (v1result_to_string platformtypename |> to_lazy);
-          {|  let get_platform_name : (string, Rresult.R.msg) Result.t Lazy.t = |}
-          ^ (Result.map quote_string platformname
+          {|  let get_abi : (t_abi, Rresult.R.msg) Result.t Lazy.t = |}
+          ^ (v1result_to_string abitypename |> to_lazy);
+          {|  let get_abi_name : (string, Rresult.R.msg) Result.t Lazy.t = |}
+          ^ (Result.map quote_string abiname
             |> v1result_to_string |> to_lazy);
           {|end (* module V1 *) |};
           {||};
           {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
           {|module V2 = struct|};
-          {|  type ostype = Android | IOS | Linux | OSX | Windows|};
-          {|  type platformtype =
+          {|  type t_os = Android | IOS | Linux | OSX | Windows|};
+          {|  type t_abi =
               | Android_arm64v8a
               | Android_arm32v7a
               | Android_x86
@@ -175,11 +175,11 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (ostype, Rresult.R.msg) Result.t Lazy.t = |}
+          {|  let get_os : (t_os, Rresult.R.msg) Result.t Lazy.t = |}
           ^ (result_to_string ostypename |> to_lazy);
-          {|  let get_platform : (platformtype, Rresult.R.msg) Result.t Lazy.t = |}
-          ^ (result_to_string platformtypename |> to_lazy);
-          {|  let get_platform_name : (string, Rresult.R.msg) Result.t Lazy.t = |}
-          ^ (Result.map quote_string platformname |> result_to_string |> to_lazy);
+          {|  let get_abi : (t_abi, Rresult.R.msg) Result.t Lazy.t = |}
+          ^ (result_to_string abitypename |> to_lazy);
+          {|  let get_abi_name : (string, Rresult.R.msg) Result.t Lazy.t = |}
+          ^ (Result.map quote_string abiname |> result_to_string |> to_lazy);
           {|end (* module V2 *) |};
         ])

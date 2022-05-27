@@ -27,7 +27,7 @@ which would mean:
 
 <!-- $MDX non-deterministic=command -->
 ```ocaml
-Lazy.force (Dkml_c_probe.C_abi.V2.get_platform ())
+Lazy.force (Dkml_c_probe.C_abi.V2.get_abi ())
 ```
 
 would result in `Ok Darwin_x86_64` or `Ok Darwin_arm64`, depending on which
@@ -44,7 +44,7 @@ $ dune build -x darwin_arm64
 
 and it would compile both Apple Intel and Apple Silicon binaries. During the
 compilation of the Apple Intel binaries (Dune's "default" context) the
-`get_platform ()` would give `Ok Darwin_x86_64` while during the compilation of
+`get_abi ()` would give `Ok Darwin_x86_64` while during the compilation of
 the Apple Silicon binaries (Dune's "default_arm64" context) it would give
 `Ok Darwin_arm64`.
 
@@ -70,8 +70,8 @@ $ ocaml show_signature.ml
 module V2 = Dkml_c_probe.C_abi.V2
 module V2 :
   sig
-    type ostype = Android | IOS | Linux | OSX | Windows
-    type platformtype =
+    type t_os = Android | IOS | Linux | OSX | Windows
+    type t_abi =
         Android_arm64v8a
       | Android_arm32v7a
       | Android_x86
@@ -87,9 +87,9 @@ module V2 :
       | Windows_x86
       | Windows_arm64
       | Windows_arm32
-    val get_os : (ostype, Rresult.R.msg) Result.t Lazy.t
-    val get_platform : (platformtype, Rresult.R.msg) Result.t Lazy.t
-    val get_platform_name : (string, Rresult.R.msg) Result.t Lazy.t
+    val get_os : (t_os, Rresult.R.msg) Result.t Lazy.t
+    val get_abi : (t_abi, Rresult.R.msg) Result.t Lazy.t
+    val get_abi_name : (string, Rresult.R.msg) Result.t Lazy.t
   end
 ```
 

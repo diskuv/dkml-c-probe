@@ -2,7 +2,7 @@
  (name create_ocaml_from_file)
  (modules create_ocaml_from_file)
  ; No PPX! Since this is core to DKML this should compile with the bare minimum
- ; Diskuv OCaml dependencies from the `system` switch
+ ; Diskuv OCaml dependencies from the `dkml` switch
  (libraries astring))
 
 (rule
