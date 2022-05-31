@@ -80,6 +80,8 @@ let get_osinfo t =
         (Result.ok "Darwin_arm64", Result.ok x)
     | [ (_, String ("darwin_x86_64" as x)) ] ->
         (Result.ok "Darwin_x86_64", Result.ok x)
+    | [ (_, String ("darwin_ppc64")) ] ->
+        (Result.error "Darwin_ppc64 is unsupported", Result.error "darwin_ppc64 is unsupported")
     | [ (_, String ("linux_arm64" as x)) ] ->
         (Result.ok "Linux_arm64", Result.ok x)
     | [ (_, String ("linux_arm32v6" as x)) ] ->
@@ -89,6 +91,8 @@ let get_osinfo t =
     | [ (_, String ("linux_x86_64" as x)) ] ->
         (Result.ok "Linux_x86_64", Result.ok x)
     | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
+    | [ (_, String ("linux_ppc64")) ] ->
+        (Result.error "Linux_ppc64 is unsupported", Result.error "linux_ppc64 is unsupported")
     | [ (_, String ("windows_x86_64" as x)) ] ->
         (Result.ok "Windows_x86_64", Result.ok x)
     | [ (_, String ("windows_x86" as x)) ] ->

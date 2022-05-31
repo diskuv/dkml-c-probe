@@ -137,7 +137,10 @@ The header file will be available as the following expressions:
 #       elif TARGET_CPU_X86_64
 #           define DKML_ABI "darwin_x86_64"
 #           define DKML_ABI_darwin_x86_64
-#       endif /* TARGET_CPU_ARM64, TARGET_CPU_X86_64 */
+#       elif TARGET_CPU_PPC64
+#           define DKML_ABI "darwin_ppc64"
+#           define DKML_ABI_darwin_ppc64
+#       endif /* TARGET_CPU_ARM64, TARGET_CPU_X86_64, TARGET_CPU_PPC64 */
 #   elif TARGET_OS_IOS
 #       define DKML_OS_NAME "IOS"
 #       define DKML_OS_IOS
@@ -181,7 +184,10 @@ The header file will be available as the following expressions:
 #       elif __i386__
 #           define DKML_ABI "linux_x86"
 #           define DKML_ABI_linux_x86
-#       endif /* __aarch64__, __arm__, __x86_64__, __i386__ */
+#       elif defined(__ppc64__) || defined(__PPC64__)
+#           define DKML_ABI "linux_ppc64"
+#           define DKML_ABI_linux_ppc64
+#       endif /* __aarch64__, __arm__, __x86_64__, __i386__, __ppc64__ || __PPC64__ */
 #   endif /* __ANDROID__ */
 #elif _WIN32
 #   define DKML_OS_NAME "Windows"
@@ -208,6 +214,9 @@ The header file will be available as the following expressions:
 
 We are always looking for new ABIs! Each new ABI needs to have its own
 maintainer.
+
+For example, PowerPC (`ppc64`) is supported in the [C Header](#c-header) but not
+the [OCaml Signature](#ocaml-signature) because there is no PowerPC maintainer.
 
 If you are interested, head over to **[Your Contributions](CONTRIBUTORS.md)**.
 
