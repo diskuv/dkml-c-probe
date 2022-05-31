@@ -1,6 +1,6 @@
 (lang dune 2.9)
 (name dkml-c-probe)
-(version 2.0.0~prerel3)
+(version 2.0.0)
 
 (using mdx 0.1)
 
