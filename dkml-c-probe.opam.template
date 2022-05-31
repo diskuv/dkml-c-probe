@@ -1,0 +1,1 @@
+conflicts: [ "result" {< "1.5"} ]

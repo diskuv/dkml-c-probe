@@ -36,3 +36,4 @@ build: [
   ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/diskuv/dkml-c-probe.git"
+conflicts: [ "result" {< "1.5"} ]
