@@ -22,6 +22,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Troubleshoot git
+        if: ${{ startsWith(matrix.os, 'windows-') }}
+        run: |
+          echo 1a
+          & "C:\Program Files\Git\bin\git.exe" config --system -l
+          echo 2a
+          & "C:\Program Files\Git\bin\git.exe" config --global -l
+          echo 4a
+          & "C:\Program Files\Git\bin\git.exe" config -l
+
+          echo 5a
+          # & "C:\Program Files\Git\bin\git.exe" config --system core.autocrlf input
+          # # & "C:\Program Files\Git\bin\git.exe" config --global core.autocrlf input
+
+          echo 1b
+          & "C:\Program Files\Git\bin\git.exe" config --system -l
+          echo 2b
+          & "C:\Program Files\Git\bin\git.exe" config --global -l
+          echo 4b
+          & "C:\Program Files\Git\bin\git.exe" config -l
+
       - name: OCaml ${{ matrix.ocaml-compiler }} with Dune cache
         uses: ocaml/setup-ocaml@v2
         if: ${{ !startsWith(matrix.os, 'windows-') }}
@@ -34,6 +55,7 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: false
+          cache-prefix: v2
       - name: Install Opam dependencies
         run: opam install . --deps-only --with-test
       - name: Build OCaml
