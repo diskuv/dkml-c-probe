@@ -5,6 +5,15 @@
  (target dkml_compiler_probe.h)
  (action (copy %{deps} %{target})))
 
+; Diagnostics. Use (universe) to always display it.
+(rule
+ (alias runtest)
+ (deps (package dkml-c-probe) (universe))
+ (action
+   (with-stdin-from
+     show_abi.ml
+     (run ocaml))))
+
 ; BEGIN HACK - Workaround unsupported ```console blocks
 (rule
  (deps README.md)
