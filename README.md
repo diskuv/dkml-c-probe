@@ -187,7 +187,10 @@ The header file will be available as the following expressions:
 #       elif defined(__ppc64__) || defined(__PPC64__)
 #           define DKML_ABI "linux_ppc64"
 #           define DKML_ABI_linux_ppc64
-#       endif /* __aarch64__, __arm__, __x86_64__, __i386__, __ppc64__ || __PPC64__ */
+#       elif __s390x__
+#           define DKML_ABI "linux_s390x"
+#           define DKML_ABI_linux_s390x
+#       endif /* __aarch64__, __arm__, __x86_64__, __i386__, __ppc64__ || __PPC64__, __s390x__ */
 #   endif /* __ANDROID__ */
 #elif _WIN32
 #   define DKML_OS_NAME "Windows"
@@ -215,8 +218,9 @@ The header file will be available as the following expressions:
 We are always looking for new ABIs! Each new ABI needs to have its own
 maintainer.
 
-For example, PowerPC (`ppc64`) is supported in the [C Header](#c-header) but not
-the [OCaml Signature](#ocaml-signature) because there is no PowerPC maintainer.
+For example, PowerPC (`ppc64`) and Linux on IBM Z (`s390x`) are supported in the
+[C Header](#c-header) but not the [OCaml Signature](#ocaml-signature) because
+there are no PowerPC and S390x maintainers.
 
 If you are interested, head over to **[Your Contributions](CONTRIBUTORS.md)**.
 

@@ -93,6 +93,8 @@ let get_osinfo t =
     | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
     | [ (_, String ("linux_ppc64")) ] ->
         (Result.error "Linux_ppc64 is unsupported", Result.error "linux_ppc64 is unsupported")
+    | [ (_, String ("linux_s390x")) ] ->
+        (Result.error "Linux_s390x is unsupported", Result.error "linux_s390x is unsupported")
     | [ (_, String ("windows_x86_64" as x)) ] ->
         (Result.ok "Windows_x86_64", Result.ok x)
     | [ (_, String ("windows_x86" as x)) ] ->
