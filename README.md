@@ -87,9 +87,9 @@ module V2 :
       | Windows_x86
       | Windows_arm64
       | Windows_arm32
-    val get_os : (t_os, Rresult.R.msg) Result.t Lazy.t
-    val get_abi : (t_abi, Rresult.R.msg) Result.t Lazy.t
-    val get_abi_name : (string, Rresult.R.msg) Result.t Lazy.t
+    val get_os : (t_os, Rresult.R.msg) result Lazy.t
+    val get_abi : (t_abi, Rresult.R.msg) result Lazy.t
+    val get_abi_name : (string, Rresult.R.msg) result Lazy.t
   end
 ```
 

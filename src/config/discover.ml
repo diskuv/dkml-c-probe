@@ -33,9 +33,9 @@ type t_abi =
   | Windows_x86
 
 type osinfo = {
-  ostypename : (string, string) Result.t;
-  abitypename : (string, string) Result.t;
-  abiname : (string, string) Result.t;
+  ostypename : (string, string) result;
+  abitypename : (string, string) result;
+  abiname : (string, string) result;
 }
 
 let get_osinfo t =
@@ -146,11 +146,11 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, string) Result.t Lazy.t = |}
+          {|  let get_os : (t_os, string) result Lazy.t = |}
           ^ (v1result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, string) Result.t Lazy.t = |}
+          {|  let get_abi : (t_abi, string) result Lazy.t = |}
           ^ (v1result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, string) Result.t Lazy.t = |}
+          {|  let get_abi_name : (string, string) result Lazy.t = |}
           ^ (Result.map quote_string abiname
             |> v1result_to_string |> to_lazy);
           {|end (* module V1 *) |};
@@ -175,11 +175,11 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, string) Result.t Lazy.t = |}
+          {|  let get_os : (t_os, string) result Lazy.t = |}
           ^ (result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, string) Result.t Lazy.t = |}
+          {|  let get_abi : (t_abi, string) result Lazy.t = |}
           ^ (result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, string) Result.t Lazy.t = |}
+          {|  let get_abi_name : (string, string) result Lazy.t = |}
           ^ (Result.map quote_string abiname |> result_to_string |> to_lazy);
           {|end (* module V2 *) |};
         ])
