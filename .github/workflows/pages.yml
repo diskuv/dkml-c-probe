@@ -16,7 +16,7 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: 4.13.x
-          dune-cache: true
+          dune-cache: false # true does not publish pages consistently
 
       - name: Deploy odoc to GitHub Pages
         uses: ocaml/setup-ocaml/deploy-doc@v2
