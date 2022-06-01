@@ -11,7 +11,7 @@
 (license Apache-2.0)
 (authors "Diskuv, Inc. <opensource+diskuv-ocaml@support.diskuv.com>")
 (maintainers "opensource+diskuv-ocaml@support.diskuv.com")
-(homepage "https://diskuv.gitlab.io/diskuv-ocaml")
+(homepage "https://github.com/diskuv/dkml-c-probe#readme")
 (bug_reports "https://github.com/diskuv/dkml-c-probe/issues")
 
 (package
