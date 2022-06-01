@@ -9,7 +9,7 @@ maintainer: ["opensource+diskuv-ocaml@support.diskuv.com"]
 authors: ["Diskuv, Inc. <opensource+diskuv-ocaml@support.diskuv.com>"]
 license: "Apache-2.0"
 homepage: "https://diskuv.gitlab.io/diskuv-ocaml"
-bug-reports: "https://github.com/diskuv/dkml-runtime-apps/issues"
+bug-reports: "https://github.com/diskuv/dkml-c-probe/issues"
 depends: [
   "dune" {>= "2.9"}
   "ocaml" {>= "4.12.1"}

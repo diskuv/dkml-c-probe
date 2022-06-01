@@ -12,7 +12,7 @@
 (authors "Diskuv, Inc. <opensource+diskuv-ocaml@support.diskuv.com>")
 (maintainers "opensource+diskuv-ocaml@support.diskuv.com")
 (homepage "https://diskuv.gitlab.io/diskuv-ocaml")
-(bug_reports "https://github.com/diskuv/dkml-runtime-apps/issues")
+(bug_reports "https://github.com/diskuv/dkml-c-probe/issues")
 
 (package
  (name dkml-c-probe)
