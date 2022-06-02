@@ -63,7 +63,7 @@ let get_osinfo t =
     | [ (_, String ("OSX" as x)) ] -> Result.ok x
     | [ (_, String ("Windows" as x)) ] -> Result.ok x
     | _ ->
-        failwith
+        Result.error
           ("Unknown operating system: no detection found in "
          ^ Dkml_compiler_probe_c_header.filename)
   in
@@ -109,9 +109,11 @@ let get_osinfo t =
     | [ (_, String ("windows_arm32" as x)) ] ->
         (Result.ok "Windows_arm32", Result.ok x)
     | _ ->
-        failwith
-          ("Unknown platform: no detection found in "
-         ^ Dkml_compiler_probe_c_header.filename)
+        let msg =
+          "Unknown platform: no detection found in "
+          ^ Dkml_compiler_probe_c_header.filename
+        in
+        (Result.error msg, Result.error msg)
   in
 
   { ostypename; abitypename; abiname }
