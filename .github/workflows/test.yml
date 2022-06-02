@@ -22,26 +22,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Troubleshoot git
+      - name: Hack Git CRLF for ocaml/setup-ocaml issue no. 529
         if: ${{ startsWith(matrix.os, 'windows-') }}
         run: |
-          echo 1a
-          & "C:\Program Files\Git\bin\git.exe" config --system -l
-          echo 2a
-          & "C:\Program Files\Git\bin\git.exe" config --global -l
-          echo 4a
-          & "C:\Program Files\Git\bin\git.exe" config -l
-
-          echo 5a
           & "C:\Program Files\Git\bin\git.exe" config --system core.autocrlf input
-          # & "C:\Program Files\Git\bin\git.exe" config --global core.autocrlf input
-
-          echo 1b
-          & "C:\Program Files\Git\bin\git.exe" config --system -l
-          echo 2b
-          & "C:\Program Files\Git\bin\git.exe" config --global -l
-          echo 4b
-          & "C:\Program Files\Git\bin\git.exe" config -l
 
       - name: OCaml ${{ matrix.ocaml-compiler }} with Dune cache
         uses: ocaml/setup-ocaml@v2
