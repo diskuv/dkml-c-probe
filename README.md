@@ -67,8 +67,8 @@ OCaml API documentation is at http://diskuv.github.io/dkml-c-probe/
 
 ```console
 $ ocaml show_signature.ml
-module V2 = Dkml_c_probe.C_abi.V2
-module V2 :
+module V3 = Dkml_c_probe.C_abi.V3
+module V3 :
   sig
     type t_os = Android | IOS | Linux | OSX | Windows
     type t_abi =
