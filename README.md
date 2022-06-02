@@ -27,7 +27,7 @@ which would mean:
 
 <!-- $MDX non-deterministic=command -->
 ```ocaml
-Lazy.force (Dkml_c_probe.C_abi.V2.get_abi ())
+Lazy.force (Dkml_c_probe.C_abi.V3.get_abi ())
 ```
 
 would result in `Ok Darwin_x86_64` or `Ok Darwin_arm64`, depending on which
@@ -87,9 +87,9 @@ module V2 :
       | Windows_x86
       | Windows_arm64
       | Windows_arm32
-    val get_os : (t_os, Rresult.R.msg) result Lazy.t
-    val get_abi : (t_abi, Rresult.R.msg) result Lazy.t
-    val get_abi_name : (string, Rresult.R.msg) result Lazy.t
+    val get_os : (t_os, string) result Lazy.t
+    val get_abi : (t_abi, string) result Lazy.t
+    val get_abi_name : (string, string) result Lazy.t
   end
 ```
 
