@@ -62,6 +62,7 @@ let get_osinfo t =
     | [ (_, String ("Linux" as x)) ] -> Result.ok x
     | [ (_, String ("OSX" as x)) ] -> Result.ok x
     | [ (_, String ("Windows" as x)) ] -> Result.ok x
+    | [ (_, String ("Unknown" as x)) ] -> Result.ok x
     | _ ->
         Result.error
           ("Unknown operating system: no detection found in "
@@ -70,6 +71,8 @@ let get_osinfo t =
 
   let abitypename, abiname =
     match abi_define with
+    | [ (_, String ("unknown" as x)) ] ->
+        (Result.ok "Unknown", Result.ok x)
     | [ (_, String ("android_arm64v8a" as x)) ] ->
         (Result.ok "Android_arm64v8a", Result.ok x)
     | [ (_, String ("android_arm32v7a" as x)) ] ->
@@ -83,8 +86,7 @@ let get_osinfo t =
     | [ (_, String ("darwin_x86_64" as x)) ] ->
         (Result.ok "Darwin_x86_64", Result.ok x)
     | [ (_, String "darwin_ppc64") ] ->
-        ( Result.error "Darwin_ppc64 is unsupported",
-          Result.error "darwin_ppc64 is unsupported" )
+        (Result.ok "Unknown", Result.ok "unknown")
     | [ (_, String ("linux_arm64" as x)) ] ->
         (Result.ok "Linux_arm64", Result.ok x)
     | [ (_, String ("linux_arm32v6" as x)) ] ->
@@ -95,11 +97,9 @@ let get_osinfo t =
         (Result.ok "Linux_x86_64", Result.ok x)
     | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
     | [ (_, String "linux_ppc64") ] ->
-        ( Result.error "Linux_ppc64 is unsupported",
-          Result.error "linux_ppc64 is unsupported" )
+        (Result.ok "Unknown", Result.ok "unknown")
     | [ (_, String "linux_s390x") ] ->
-        ( Result.error "Linux_s390x is unsupported",
-          Result.error "linux_s390x is unsupported" )
+        (Result.ok "Unknown", Result.ok "unknown")
     | [ (_, String ("windows_x86_64" as x)) ] ->
         (Result.ok "Windows_x86_64", Result.ok x)
     | [ (_, String ("windows_x86" as x)) ] ->
@@ -110,7 +110,7 @@ let get_osinfo t =
         (Result.ok "Windows_arm32", Result.ok x)
     | _ ->
         let msg =
-          "Unknown platform: no detection found in "
+          "Unknown ABI: no detection found in "
           ^ Dkml_compiler_probe_c_header.filename
         in
         (Result.error msg, Result.error msg)

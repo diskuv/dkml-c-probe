@@ -107,4 +107,13 @@
 #   endif /* _M_ARM64, _M_ARM, _WIN64, _M_IX86 */
 #endif
 
+#ifndef DKML_OS_NAME
+#   define DKML_OS_NAME "Unknown"
+#   define DKML_OS_Unknown
+#endif
+#ifndef DKML_ABI
+#   define DKML_ABI "Unknown"
+#   define DKML_ABI_unknown
+#endif
+
 #endif /* DKMLCOMPILERPROBE_H */

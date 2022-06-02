@@ -211,6 +211,15 @@ The header file will be available as the following expressions:
 #   endif /* _M_ARM64, _M_ARM, _WIN64, _M_IX86 */
 #endif
 
+#ifndef DKML_OS_NAME
+#   define DKML_OS_NAME "Unknown"
+#   define DKML_OS_Unknown
+#endif
+#ifndef DKML_ABI
+#   define DKML_ABI "Unknown"
+#   define DKML_ABI_unknown
+#endif
+
 #endif /* DKMLCOMPILERPROBE_H */
 ```
 
@@ -218,10 +227,6 @@ The header file will be available as the following expressions:
 
 We are always looking for new ABIs! Each new ABI needs to have its own
 maintainer.
-
-For example, PowerPC (`ppc64`) and Linux on IBM Z (`s390x`) are supported in the
-[C Header](#c-header) but not the [OCaml Signature](#ocaml-signature) because
-there are no PowerPC and S390x maintainers.
 
 If you are interested, head over to **[Your Contributions](CONTRIBUTORS.md)**.
 
