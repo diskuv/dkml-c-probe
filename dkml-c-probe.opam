@@ -13,7 +13,6 @@ bug-reports: "https://github.com/diskuv/dkml-c-probe/issues"
 depends: [
   "dune" {>= "2.9"}
   "ocaml" {>= "4.12.1"}
-  "rresult" {>= "0.6.0"}
   "astring" {>= "0.8.5"}
   "mdx" {>= "2.0.0" & with-test}
   "dune-configurator" {>= "2.9" & build}
