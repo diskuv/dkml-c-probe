@@ -1,0 +1,8 @@
+(library
+ (name probe_common)
+ (modules probe_common))
+
+(tests
+ (names test_dos2unix)
+ (modules test_dos2unix)
+ (libraries probe_common ounit2))

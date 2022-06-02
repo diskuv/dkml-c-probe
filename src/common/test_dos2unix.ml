@@ -14,26 +14,23 @@
 (*  limitations under the License.                                            *)
 (******************************************************************************)
 
-(* [read_file fname] gets the contents of [fname] *)
-let read_file header_filename =
-  let ch = open_in_bin header_filename in
-  let s = really_input_string ch (in_channel_length ch) in
-  close_in ch;
-  s
+open OUnit2
+open Probe_common
 
-(* Prints the file from the first argument in Sys.argv as:
+let suite =
+  "dos2unix"
+  >::: [
+         ("pass_empty" >:: fun _ -> assert_equal "" (dos2unix ""));
+         ("pass_lf" >:: fun _ -> assert_equal "\n" (dos2unix "\n"));
+         ("shrink_crlf" >:: fun _ -> assert_equal "\n" (dos2unix "\r\n"));
+         ("pass_cr" >:: fun _ -> assert_equal "\r" (dos2unix "\r"));
+         ("pass_lf_lf" >:: fun _ -> assert_equal "\n\n" (dos2unix "\n\n"));
+         ( "shrink_crlf_crlf" >:: fun _ ->
+           assert_equal "\n\n" (dos2unix "\r\n\r\n") );
+         ( "pass_textlf_textlf" >:: fun _ ->
+           assert_equal "hi\nthere\n" (dos2unix "hi\nthere\n") );
+         ( "shrink_textcrlf_textcrlf" >:: fun _ ->
+           assert_equal "hi\nthere\n" (dos2unix "hi\r\nthere\r\n") );
+       ]
 
-   [[
-     let contents = "..."
-   ]]
-
-   The file contents will have been trimmed for whitespace, and have all CRLF normalized into LF.
-*)
-let () =
-  let filename = Sys.argv.(1) in
-  let basename = Filename.basename filename in
-  let file_as_ocaml_string =
-    read_file filename |> String.trim |> Probe_common.dos2unix |> String.escaped
-  in
-  print_string ("let contents = \"" ^ file_as_ocaml_string ^ "\"\n");
-  print_string ("let filename = \"" ^ Stdlib.String.escaped basename ^ "\"\n")
+let () = run_test_tt_main suite
