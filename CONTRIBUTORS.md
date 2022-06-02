@@ -29,5 +29,4 @@ If you would like to add a new ABI, you will need to:
 
 Before submitting your PR make sure you have:
 1. Run `dune build`
-2. Run `dune runtest`
-3. Run `dune build @runmarkdown --auto-promote`
+2. Run `dune build @runtest @runmarkdown --auto-promote`

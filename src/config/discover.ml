@@ -198,8 +198,9 @@ let () =
           (* V3 *)
           {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
           {|module V3 = struct|};
-          {|  type t_os = Android | IOS | Linux | OSX | Windows|};
+          {|  type t_os = Unknown | Android | IOS | Linux | OSX | Windows|};
           {|  type t_abi =
+              | Unknown
               | Android_arm64v8a
               | Android_arm32v7a
               | Android_x86

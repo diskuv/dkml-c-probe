@@ -70,9 +70,10 @@ $ ocaml show_signature.ml
 module V3 = Dkml_c_probe.C_abi.V3
 module V3 :
   sig
-    type t_os = Android | IOS | Linux | OSX | Windows
+    type t_os = Unknown | Android | IOS | Linux | OSX | Windows
     type t_abi =
-        Android_arm64v8a
+        Unknown
+      | Android_arm64v8a
       | Android_arm32v7a
       | Android_x86
       | Android_x86_64

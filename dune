@@ -23,7 +23,7 @@
    %{target}
    (run sed "s/```console/```sh/g" %{deps}))))
 (rule
- (deps (:in README.md.sh) show_signature.ml dkml_compiler_probe.h)
+ (deps (:in README.md.sh) src/dkml_c_probe.cma show_signature.ml dkml_compiler_probe.h)
  (target README.md.sh.corrected)
  (action
   (run ocaml-mdx test --force-output %{in})))
