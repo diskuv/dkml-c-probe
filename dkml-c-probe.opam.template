@@ -1,1 +1,16 @@
 conflicts: [ "result" {< "1.5"} ]
+# Until Dune 3+ the auto-generated 'dune' will have an invalid ["dune" "install" ...] step
+# that messes up with cross-compilation. Customized it to remove it.
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
