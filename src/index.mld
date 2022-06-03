@@ -1,0 +1,8 @@
+{0 dkml-c-probe index}
+
+{1 Library dkml-c-probe}
+The entry point of this library is the module:
+{!module-Dkml_c_probe}.
+
+Examples and other documentation is at
+{{:https://github.com/diskuv/dkml-c-probe#readme} the dkml-c-probe project page}.

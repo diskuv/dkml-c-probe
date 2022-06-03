@@ -1,10 +1,22 @@
 # dkml-c-probe
 
-Introspects OCaml's native C compiler to determine the ABI used by executables
-created by the C compiler. Designed to be used to simplify [Dune Configurator](https://dune.readthedocs.io/en/latest/dune-libs.html#configurator-1)
-code or [foreign C stub code](https://dune.readthedocs.io/en/latest/foreign-code.html).
-Since `dkml-c-probe` never runs executables created by the C compiler,
-`dkml-c-probe` is safe to use with cross-compilers.
+`dkml-c-probe` simplifies the creation of cross-compiling compatible
+[foreign C stub code](https://dune.readthedocs.io/en/latest/foreign-code.html).
+It includes two components:
+
+1. **C_abi**: Introspects OCaml's native C compiler, including cross-compilers,
+   to determine the ABI those C compilers will generate
+2. **C_conf**: Supplies flags to C compilers and OCaml tools that specify the locations
+   of C headers and C libraries
+
+Its support for cross-compiling comes from:
+
+- With cross-compilers you will not often be able to run the executables
+  that have been generated. `C_abi` never runs executables created by the C compiler.
+- When compiling on a host ABI and cross-compiling to multiple target ABIs,
+  there must be separate sets of C libraries: one set for the host ABI and
+  one set for each target ABI. `C_conf` can locate C headers and C libraries
+  that are appropriate for the host ABI and target ABIs.
 
 For example, let's say you had an Apple Intel x86_64 build machine with
 a OCaml ocamlfind cross-compiler toolchain for Apple Silicon. *This will
@@ -23,11 +35,11 @@ $ ocamlfind -toolchain darwin_arm64 ocamlopt -config
 native_c_compiler: clang -arch arm64
 ```
 
-which would mean:
+which would mean using the `C_abi`:
 
 <!-- $MDX non-deterministic=command -->
 ```ocaml
-Lazy.force (Dkml_c_probe.C_abi.V3.get_abi ())
+Lazy.force (Dkml_c_probe.C_abi.V3.get_abi)
 ```
 
 would result in `Ok Darwin_x86_64` or `Ok Darwin_arm64`, depending on which
@@ -48,6 +60,94 @@ compilation of the Apple Intel binaries (Dune's "default" context) the
 the Apple Silicon binaries (Dune's "default_arm64" context) it would give
 `Ok Darwin_arm64`.
 
+---
+
+Let's also say you needed to link your code against the foreign C library "gmp".
+
+Your `dune` script would typically look like:
+
+```lisp
+(library
+ (name my_library)
+ (c_library_flags
+  :standard
+  (:include c_library_flags.sexp))
+ (foreign_stubs
+  (language c)
+  (names my_stubs)
+  (flags
+   :standard
+   (:include c_flags.sexp))))
+
+(rule
+ (targets c_flags.sexp c_library_flags.sexp)
+ (action
+  (run
+   ./config/discover.exe
+   -context_name
+   %{context_name}
+   -ccomp_type
+   %{ocaml-config:ccomp_type})))
+```
+
+In the above `dune` script the responsibility to supply the C
+flags (ex. `-I/usr/local/include/gmp`) and C library flags
+(ex. `-L/usr/local/lib/gmp -lgmp`) has been delegated
+to `./config/discover.exe`.
+
+You would use `C_conf` in the
+[Dune Configurator based `config/discover.ml`](https://dune.readthedocs.io/en/stable/dune-libs.html)
+to generate these flags:
+
+```lisp
+; file: config/dune
+(executable
+ (name discover)
+ (libraries dune-configurator dkml-c-probe))
+```
+
+<!-- $MDX file=samples/discover.ml -->
+```ocaml
+(* file: config/discover.ml *)
+
+module C = Configurator.V1
+
+let () =
+  let ctxname = ref "" in
+  let ccomp_type = ref "" in
+  let args =
+    [
+      ("-context_name", Arg.Set_string ctxname, "Dune %{context_name} variable");
+      ( "-ccomp_type",
+        Arg.Set_string ccomp_type,
+        "Dune %{ocaml-config:ccomp_type} variable" );
+    ]
+  in
+  C.main ~args ~name:"discover" (fun _c ->
+      let cflags, clibraryflags =
+        let open Dkml_c_probe.C_conf in
+        match load_from_dune_context_name !ctxname with
+        | Error msg ->
+            failwith ("Failed loading C_conf in Dune Configurator. " ^ msg)
+        | Ok conf -> (
+            match
+              compiler_flags_of_ccomp_type conf ~ccomp_type:!ccomp_type
+                ~clibrary:"ffi"
+            with
+            | Error msg ->
+                failwith ("Failed getting compiler flags from C_conf. " ^ msg)
+            | Ok (Some fl) -> (C_flags.cc_flags fl, C_flags.link_flags fl)
+            | Ok None ->
+                (* We can't find the library! You could fall back
+                   to pkg-config by using C.Pkg_config, or just have
+                   a sane default. *)
+                ([], [ "-lgmp" ]))
+      in
+
+      C.Flags.write_sexp "c_flags.sexp" cflags;
+      C.Flags.write_sexp "c_library_flags.sexp" clibraryflags)
+```
+
 ## Usage
 
 Install it with:
@@ -58,15 +158,17 @@ $ opam install dkml-c-probe
 ```
 
 Then either:
-* Use the [OCaml Signature](#ocaml-signature) in your [Dune Configurator](https://dune.readthedocs.io/en/latest/dune-libs.html#configurator-1)
+* Use the [OCaml Interfaces](#ocaml-interfaces) in your [Dune Configurator](https://dune.readthedocs.io/en/latest/dune-libs.html#configurator-1)
 * Use the [C Header](#c-header) in your [foreign C stub code](https://dune.readthedocs.io/en/latest/foreign-code.html)
 
-## OCaml Signature
+OCaml API documentation is at https://diskuv.github.io/dkml-c-probe/dkml-c-probe/Dkml_c_probe/index.html
 
-OCaml API documentation is at http://diskuv.github.io/dkml-c-probe/
+## OCaml Interfaces
+
+### C_abi
 
 ```console
-$ ocaml show_signature.ml
+$ ocaml samples/show_abi_signature.ml
 module V3 = Dkml_c_probe.C_abi.V3
 module V3 :
   sig
@@ -91,6 +193,41 @@ module V3 :
     val get_os : (t_os, string) result Lazy.t
     val get_abi : (t_abi, string) result Lazy.t
     val get_abi_name : (string, string) result Lazy.t
+  end
+```
+
+### C_conf
+
+Extensive documentation is available at the
+[C_conf documentation page](https://diskuv.github.io/dkml-c-probe/dkml-c-probe/Dkml_c_probe/C_conf/index.html)
+
+Here is a quick peek at `C_conf`:
+
+```console
+$ ocaml samples/show_conf_signature.ml
+module C_conf = Dkml_c_probe__.C_conf
+module C_conf = Dkml_c_probe.C_conf
+module C_conf :
+  sig
+    type t
+    type env_getter = string -> string option
+    module C_flags : sig ... end
+    module Ocamlmklib_flags : sig ... end
+    val load : ?getenv:env_getter -> unit -> (t, string) result
+    val load_from_dune_context_name :
+      ?getenv:env_getter -> string -> (t, string) result
+    val load_from_findlib_toolchain :
+      ?getenv:env_getter -> string option -> (t, string) result
+    val compiler_flags_of_ccomp_type :
+      t ->
+      ccomp_type:string ->
+      clibrary:string -> (C_flags.t option, string) result
+    val compiler_flags_msvc :
+      t -> clibrary:string -> (C_flags.t option, string) result
+    val compiler_flags_gcc :
+      t -> clibrary:string -> (C_flags.t option, string) result
+    val tool_flags_ocamlmklib :
+      t -> clibrary:string -> (Ocamlmklib_flags.t option, string) result
   end
 ```
 

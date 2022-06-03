@@ -3,18 +3,22 @@
 (rule
  (deps src/config/dkml_compiler_probe.h)
  (target dkml_compiler_probe.h)
- (action (copy %{deps} %{target})))
+ (action
+  (copy %{deps} %{target})))
 
 ; Diagnostics. Use (universe) to always display it.
+
 (rule
  (alias runtest)
- (deps (package dkml-c-probe) (universe))
+ (deps
+  (package dkml-c-probe))
  (action
-   (with-stdin-from
-     show_abi.ml
-     (run ocaml))))
+  (with-stdin-from
+   show_abi.ml
+   (run ocaml))))
 
 ; BEGIN HACK - Workaround unsupported ```console blocks
+
 (rule
  (deps README.md)
  (target README.md.sh)
@@ -22,11 +26,19 @@
   (with-stdout-to
    %{target}
    (run sed "s/```console/```sh/g" %{deps}))))
+
 (rule
- (deps (:in README.md.sh) src/dkml_c_probe.cma show_signature.ml dkml_compiler_probe.h)
+ (deps
+  (:in README.md.sh)
+  src/dkml_c_probe.cma
+  samples/discover.ml
+  samples/show_abi_signature.ml
+  samples/show_conf_signature.ml
+  dkml_compiler_probe.h)
  (target README.md.sh.corrected)
  (action
   (run ocaml-mdx test --force-output %{in})))
+
 (rule
  (deps README.md.sh.corrected)
  (target README.md.corrected)
@@ -34,9 +46,11 @@
   (with-stdout-to
    %{target}
    (run sed "s/```sh/```console/g" %{deps}))))
+
 (rule
  (alias runmarkdown)
  (action
   (progn
    (diff README.md README.md.corrected))))
+
 ; END HACK

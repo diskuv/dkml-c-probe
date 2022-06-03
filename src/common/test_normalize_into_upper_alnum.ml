@@ -14,21 +14,27 @@
 (*  limitations under the License.                                            *)
 (******************************************************************************)
 
-(** [dos2unix s] converts all CRLF sequences in [s] into LF. Assumes [s] is ASCII encoded. *)
-let dos2unix s =
-  let l = String.length s in
-  String.to_seqi s
-  (* Shrink [\r\n] into [\n] *)
-  |> Seq.filter_map (function
-       | i, '\r' when i + 1 < l && s.[i + 1] == '\n' -> None
-       | _, c -> Some c)
-  |> String.of_seq
+open OUnit2
+open Probe_common
 
-(** [normalize_into_upper_alnum s] translates the ASCII string [s] into only
-    the letters and numbers; lowercase letters are converted into uppercase,
-    and any non alphanumeric character is translated into an underscore. *)
-let normalize_into_upper_alnum =
-  String.map (function
-    | c when (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') -> c
-    | c when c >= 'a' && c <= 'z' -> Char.uppercase_ascii c
-    | _ -> '_')
+let suite =
+  "normalize_into_upper_alnum"
+  >::: [
+         ( "pass_empty" >:: fun _ ->
+           assert_equal "" (normalize_into_upper_alnum "") );
+         ( "underscore_lf" >:: fun _ ->
+           assert_equal "_" (normalize_into_upper_alnum "\n") );
+         ( "underscore_crlf" >:: fun _ ->
+           assert_equal "__" (normalize_into_upper_alnum "\r\n") );
+         ( "upcase_lower" >:: fun _ ->
+           assert_equal "ABC" (normalize_into_upper_alnum "abc") );
+         ( "pass_digits" >:: fun _ ->
+           assert_equal "3489765" (normalize_into_upper_alnum "3489765") );
+         ( "underscore_non_alnum" >:: fun _ ->
+           assert_equal "____" (normalize_into_upper_alnum "@#%^") );
+         ( "upcase_underscore_phrase" >:: fun _ ->
+           assert_equal "HELLO__WORLD_"
+             (normalize_into_upper_alnum "Hello, World!") );
+       ]
+
+let () = run_test_tt_main suite

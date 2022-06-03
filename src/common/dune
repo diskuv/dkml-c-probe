@@ -1,8 +1,9 @@
 (library
  (name probe_common)
+ (public_name dkml-c-probe.common)
  (modules probe_common))
 
 (tests
- (names test_dos2unix)
- (modules test_dos2unix)
- (libraries probe_common ounit2))
+ (names test_dos2unix test_normalize_into_upper_alnum)
+ (modules test_dos2unix test_normalize_into_upper_alnum)
+ (libraries dkml-c-probe.common ounit2))

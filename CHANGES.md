@@ -5,6 +5,7 @@
 * Add `Unknown` to `t_abi` and other sum types
 * Avoid [compiler issues](https://github.com/owlbarn/eigen/issues/38) by
   defaulting to `Unknown` in the C header
+* Add `C_conf` module
 
 ## 2.0.0
 
