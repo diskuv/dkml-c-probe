@@ -3,7 +3,7 @@ name: Tests
 on:
   push:
     branches:
-      - 'main'
+      - "main"
 
 jobs:
   test-with-setup-ocaml:
@@ -15,7 +15,7 @@ jobs:
           - ubuntu-latest
           - macos-latest
         ocaml-compiler:
-          - '4.13.x'
+          - "4.13.x"
     runs-on: ${{ matrix.os }}
     name: test-ocaml / ${{ matrix.os }}-${{ matrix.ocaml-compiler }}
     steps:
@@ -48,12 +48,11 @@ jobs:
         run: opam exec -- dune runtest --display=short
       - name: Install dkml-c-probe
         run: opam exec -- dune install
-      - name: Display Probe
+      - name: Display probe
         run: opam exec -- sh -c 'cat show_abi.ml | ocaml'
 
-
   setup-dkml:
-    uses: 'diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0'
+    uses: "diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0"
     permissions: {} # remove all rights of GITHUB_TOKEN when it is passed to setup-dkml.yml
     with:
       ocaml-compiler: 4.12.1
@@ -150,5 +149,9 @@ jobs:
         run: opamrun exec -- dune runtest --display=short
       - name: Install dkml-c-probe
         run: opamrun exec -- dune install
-      - name: Display Probe
+      - name: Display probe of default toolchain
         run: opamrun exec -- sh -c 'cat show_abi.ml | ocaml'
+      - name: Display source snippets of all toolchains
+        run: |
+          prefix=$(opam var prefix)
+          opamrun exec -- sh -c "cd '$prefix' && "'find . -name .opam-switch -prune -o -name c_abi.ml -print | xargs grep -A 1 "let get_"'
