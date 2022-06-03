@@ -14,8 +14,6 @@
 (*  limitations under the License.                                            *)
 (******************************************************************************)
 
-open Astring
-
 (* [read_file fname] gets the contents of [fname] *)
 let read_file header_filename =
   let ch = open_in_bin header_filename in
@@ -24,7 +22,22 @@ let read_file header_filename =
   s
 
 (* [dos2unix s] converts all CRLF sequences in [s] into LF. Assumes [s] is ASCII encoded. *)
-let dos2unix s = String.concat ~sep:"\n" @@ String.cuts ~sep:"\r\n" s
+let dos2unix s = 
+  let slen = String.length s in
+  let buf = Buffer.create slen in
+  let rec loop i =
+    match String.index_from_opt s i '\r' with
+    | None  ->
+      Buffer.add_substring buf s i (slen - i);
+      Buffer.contents buf
+    | Some j when j < (slen - 2) && String.unsafe_get s (j + 1) <> '\n' ->
+      Buffer.add_substring buf s i (j + 1);
+      loop (j + 2)
+    | Some j ->
+      Buffer.add_substring buf s i (j - i);
+      Buffer.add_char buf '\n';
+      loop (j + 2)
+  in loop 0
 
 (* Prints the file from the first argument in Sys.argv as:
 
@@ -38,7 +51,7 @@ let () =
   let filename = Sys.argv.(1) in
   let basename = Filename.basename filename in
   let file_as_ocaml_string =
-    read_file filename |> String.trim |> dos2unix |> String.Ascii.escape_string
+    read_file filename |> String.trim |> dos2unix |> String.escaped
   in
   print_string ("let contents = \"" ^ file_as_ocaml_string ^ "\"\n");
   print_string ("let filename = \"" ^ Stdlib.String.escaped basename ^ "\"\n")
