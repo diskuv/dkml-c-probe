@@ -71,8 +71,7 @@ let get_osinfo t =
 
   let abitypename, abiname =
     match abi_define with
-    | [ (_, String ("unknown" as x)) ] ->
-        (Result.ok "Unknown", Result.ok x)
+    | [ (_, String ("unknown" as x)) ] -> (Result.ok "Unknown", Result.ok x)
     | [ (_, String ("android_arm64v8a" as x)) ] ->
         (Result.ok "Android_arm64v8a", Result.ok x)
     | [ (_, String ("android_arm32v7a" as x)) ] ->
@@ -96,10 +95,8 @@ let get_osinfo t =
     | [ (_, String ("linux_x86_64" as x)) ] ->
         (Result.ok "Linux_x86_64", Result.ok x)
     | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
-    | [ (_, String "linux_ppc64") ] ->
-        (Result.ok "Unknown", Result.ok "unknown")
-    | [ (_, String "linux_s390x") ] ->
-        (Result.ok "Unknown", Result.ok "unknown")
+    | [ (_, String "linux_ppc64") ] -> (Result.ok "Unknown", Result.ok "unknown")
+    | [ (_, String "linux_s390x") ] -> (Result.ok "Unknown", Result.ok "unknown")
     | [ (_, String ("windows_x86_64" as x)) ] ->
         (Result.ok "Windows_x86_64", Result.ok x)
     | [ (_, String ("windows_x86" as x)) ] ->
@@ -118,31 +115,77 @@ let get_osinfo t =
 
   { ostypename; abitypename; abiname }
 
+let result_to_string = function
+  | Result.Ok v -> "Result.ok (" ^ v ^ ")"
+  | Result.Error e -> "Result.error (\"" ^ String.escaped e ^ "\")"
+
+let result_to_quoted_string = function
+  | Result.Ok v -> "Result.ok (\"" ^ v ^ "\")"
+  | Result.Error e -> "Result.error (\"" ^ String.escaped e ^ "\")"
+
+let adjust_pre_v2_abi ~abitypename ~abiname =
+  match (abitypename, abiname) with
+  | Result.Ok "Linux_x86", _ | _, Result.Ok "linux_x86" ->
+      let err =
+        Result.error
+          "linux_x86 ABI is only available in Target_context.V2 or later"
+      in
+      (err, err)
+  | Result.Ok tn, Result.Ok n -> (Result.ok tn, Result.ok n)
+  | Result.Error e, _ | _, Result.Error e -> (Result.error e, Result.error e)
+
+let adjust_pre_v3_os ~ostypename =
+  match ostypename with
+  | Result.Ok "Unknown" ->
+      Result.error
+        "'Unknown' OS is only available in Target_context.V3 or later"
+  | Result.Ok v -> Result.ok v
+  | Result.Error e -> Result.error e
+
+let adjust_pre_v3_abi ~abitypename ~abiname =
+  match (abitypename, abiname) with
+  | Result.Ok "Unknown", _ | _, Result.Ok "Unknown" ->
+      let err =
+        Result.error
+          "'Unknown' ABI is only available in Target_context.V3 or later"
+      in
+      (err, err)
+  | Result.Ok tn, Result.Ok n -> (Result.ok tn, Result.ok n)
+  | Result.Error e, _ | _, Result.Error e -> (Result.error e, Result.error e)
+
 let () =
   main ~name:"discover" (fun t ->
       let { ostypename; abitypename; abiname } = get_osinfo t in
-      let result_to_string = function
-        | Result.Ok v -> "Result.ok (" ^ v ^ ")"
-        | Result.Error e -> "Result.error (\"" ^ String.escaped e ^ "\")"
-      in
-      let v1result_to_string r =
-        match (r, abiname) with
-        | _, Result.Ok "linux_x86" ->
-            "Result.error (\"linux_x86 platform is only available in \
-             Target_context.V2 or later\")"
-        | Result.Ok v, _ -> result_to_string (Result.ok v)
-        | Result.Error e, _ -> result_to_string (Result.error e)
-      in
-      let quote_string s = "\"" ^ s ^ "\"" in
       let to_lazy s = "lazy (" ^ s ^ ")" in
 
-      write_lines "c_abi.ml"
+      let finish_module ~v ~ostypename ~abitypename ~abiname =
         [
-          (* As you expand the list of platforms and OSes make new versions! Make sure the new platforms and OS give back Result.error in older versions. *)
-          {|(** New applications should use the {!V3} module instead. *)|};
-          {|module V1 = struct|};
-          {|  type t_os = Android | IOS | Linux | OSX | Windows|};
-          {|  type t_abi =
+          {|  let get_os : (t_os, string) result Lazy.t = |}
+          ^ (result_to_string ostypename |> to_lazy);
+          {|  let get_abi : (t_abi, string) result Lazy.t = |}
+          ^ (result_to_string abitypename |> to_lazy);
+          {|  let get_abi_name : (string, string) result Lazy.t = |}
+          ^ (result_to_quoted_string abiname |> to_lazy);
+          {|end (* module |} ^ v ^ {| *) |};
+          {||};
+        ]
+      in
+
+      (* As you expand the list of platforms and OSes make new versions! Make sure the new ABIs
+         and OS give back Result.error in older versions. *)
+      let lines = [] in
+
+      (* V1 *)
+      let lines =
+        let abitypename, abiname = adjust_pre_v2_abi ~abitypename ~abiname in
+        let abitypename, abiname = adjust_pre_v3_abi ~abitypename ~abiname in
+        let ostypename = adjust_pre_v3_os ~ostypename in
+        lines
+        @ [
+            {|(** New applications should use the {!V3} module instead. *)|};
+            {|module V1 = struct|};
+            {|  type t_os = Android | IOS | Linux | OSX | Windows|};
+            {|  type t_abi =
               | Android_arm64v8a
               | Android_arm32v7a
               | Android_x86
@@ -158,19 +201,20 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, string) result Lazy.t = |}
-          ^ (v1result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, string) result Lazy.t = |}
-          ^ (v1result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, string) result Lazy.t = |}
-          ^ (Result.map quote_string abiname |> v1result_to_string |> to_lazy);
-          {|end (* module V1 *) |};
-          {||};
-          (* V2 *)
-          {|(** New applications should use the {!V3} module instead. *)|};
-          {|module V2 = struct|};
-          {|  type t_os = Android | IOS | Linux | OSX | Windows|};
-          {|  type t_abi =
+          ]
+        @ finish_module ~v:"V1" ~ostypename ~abitypename ~abiname
+      in
+
+      (* V2 *)
+      let lines =
+        let abitypename, abiname = adjust_pre_v3_abi ~abitypename ~abiname in
+        let ostypename = adjust_pre_v3_os ~ostypename in
+        lines
+        @ [
+            {|(** New applications should use the {!V3} module instead. *)|};
+            {|module V2 = struct|};
+            {|  type t_os = Android | IOS | Linux | OSX | Windows|};
+            {|  type t_abi =
               | Android_arm64v8a
               | Android_arm32v7a
               | Android_x86
@@ -187,19 +231,18 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, string) result Lazy.t = |}
-          ^ (result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, string) result Lazy.t = |}
-          ^ (result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, string) result Lazy.t = |}
-          ^ (Result.map quote_string abiname |> result_to_string |> to_lazy);
-          {|end (* module V2 *) |};
-          {||};
-          (* V3 *)
-          {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
-          {|module V3 = struct|};
-          {|  type t_os = Unknown | Android | IOS | Linux | OSX | Windows|};
-          {|  type t_abi =
+          ]
+        @ finish_module ~v:"V2" ~ostypename ~abitypename ~abiname
+      in
+
+      (* V3 *)
+      let lines =
+        lines
+        @ [
+            {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
+            {|module V3 = struct|};
+            {|  type t_os = Unknown | Android | IOS | Linux | OSX | Windows|};
+            {|  type t_abi =
               | Unknown
               | Android_arm64v8a
               | Android_arm32v7a
@@ -217,11 +260,8 @@ let () =
               | Windows_arm64
               | Windows_arm32
           |};
-          {|  let get_os : (t_os, string) result Lazy.t = |}
-          ^ (result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, string) result Lazy.t = |}
-          ^ (result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, string) result Lazy.t = |}
-          ^ (Result.map quote_string abiname |> result_to_string |> to_lazy);
-          {|end (* module V3 *) |};
-        ])
+          ]
+        @ finish_module ~v:"V3" ~ostypename ~abitypename ~abiname
+      in
+
+      write_lines "c_abi.ml" lines)
