@@ -6,7 +6,104 @@ on:
       - "main"
 
 jobs:
+  test-with-Cross-Platform-Action:
+    runs-on: macos-10.15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - name: openbsd
+            version: '6.8'
+          # 6.9 gives ...
+          # <><> Fetching repository information ><><><><><><><><><><><><><><><><><><><><><>
+          # Error:  Could not update repository "default": OpamDownload.Download_fail(_, "Download command failed: \"/usr/bin/ftp -o /tmp/opam-87092-8f3a45/index.tar.gz.part -U opam/2.1.2 -- https://opam.ocaml.org/index.tar.gz\" exited with code 1 \"TLS handshake failure: certificate verification failed: certificate has expired\"")          
+          - name: openbsd
+            version: '6.9'
+          - name: freebsd
+            version: '13.0'
+          # netbsd 9.2 does not start in VirtualBox as of 2022-06-05
+          # - name: netbsd
+          #   version: '9.2'
+    name: Cross-Platform-Action / ${{ matrix.os.name }}-${{ matrix.os.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Test in VirtualBox
+        uses: cross-platform-actions/action@v0.5.0
+        env:
+          MY_ENV1: MY_ENV1
+          MY_ENV2: MY_ENV2
+        with:
+          environment_variables: MY_ENV1 MY_ENV2
+          operating_system: ${{ matrix.os.name }}
+          version: ${{ matrix.os.version }}
+          shell: bash
+          run: |
+            uname -a
+            usys=$(uname -s)
+            echo $usys
+            pwd
+
+            set -x
+
+            run_as_root() {
+              # doas on OpenBSD is not enabled (yet)
+              sudo "$@"
+            }
+
+            case "$usys" in
+              OpenBSD)
+                run_as_root pkg_add curl
+                run_as_root pkg_add gmake bzip2
+                run_as_root pkg_add gpatch
+                # 6.8
+                run_as_root pkg_add gtar-1.32p1 unzip-6.0p13 || true
+                # 6.9
+                run_as_root pkg_add gtar-1.34 unzip-6.0p14 || true
+                run_as_root pkg_add git
+                ;;
+              FreeBSD)
+                run_as_root pkg upgrade --yes pkg
+                run_as_root pkg install --yes curl
+                run_as_root pkg install --yes gmake bzip2
+                run_as_root pkg install --yes patch gtar unzip
+                run_as_root pkg install --yes git
+                ;;
+            esac
+
+            # <needs> curl
+            curl -fsSL https://github.com/ocaml/opam/releases/download/2.1.2/opam-full-2.1.2.tar.gz > opam-full-2.1.2.tar.gz
+            case "$usys" in
+              OpenBSD)
+                echo 'SHA256 (opam-full-2.1.2.tar.gz) = de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede' | sha256 -c
+                ;;
+              FreeBSD)
+                sha256 -c 'de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede' opam-full-2.1.2.tar.gz
+                ;;
+            esac
+            tar xvfz opam-full-2.1.2.tar.gz
+
+            # <needs> gmake bzip2
+            cd opam-full-2.1.2
+            gmake cold
+            run_as_root gmake cold-install
+            cd ..
+            rm -rf opam-full-2.1.2
+
+            # <needs> gpatch gtar unzip
+            opam init --auto-setup
+
+            # <needs> git
+            opam install . --deps-only --with-test --yes
+
+            opam exec -- dune build --display=short
+            opam exec -- dune runtest --display=short
+            opam exec -- dune install
+            opam exec -- sh -c 'cat show_abi.ml | ocaml'
+
   test-with-setup-ocaml:
+    if: "false"
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +138,7 @@ jobs:
           dune-cache: false
           cache-prefix: v3
       - name: Install Opam dependencies
-        run: opam install . --deps-only --with-test
+        run: opam install . --deps-only --with-test --yes
       - name: Build OCaml
         run: opam exec -- dune build --display=short
       - name: Test OCaml
@@ -52,12 +149,14 @@ jobs:
         run: opam exec -- sh -c 'cat show_abi.ml | ocaml'
 
   setup-dkml:
+    if: "false"
     uses: "diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0"
     permissions: {} # remove all rights of GITHUB_TOKEN when it is passed to setup-dkml.yml
     with:
       ocaml-compiler: 4.12.1
 
   test-with-setup-dkml:
+    if: "false"
     needs: setup-dkml
     strategy:
       fail-fast: false
