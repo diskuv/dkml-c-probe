@@ -18,7 +18,7 @@ jobs:
             version: '6.9'
             # 6.9 gives ...
             #   <><> Fetching repository information ><><><><><><><><><><><><><><><><><><><><><>
-            #   Error:  Could not update repository "default": OpamDownload.Download_fail(_, "Download command failed: \"/usr/bin/ftp -o /tmp/opam-87092-8f3a45/index.tar.gz.part -U opam/2.1.2 -- https://opam.ocaml.org/index.tar.gz\" exited with code 1 \"TLS handshake failure: certificate verification failed: certificate has expired\"")          
+            #   Error:  Could not update repository "default": OpamDownload.Download_fail(_, "Download command failed: \"/usr/bin/ftp -o /tmp/opam-87092-8f3a45/index.tar.gz.part -U opam/2.1.2 -- https://opam.ocaml.org/index.tar.gz\" exited with code 1 \"TLS handshake failure: certificate verification failed: certificate has expired\"")
             # because a syspatch has not been applied to the Cross-Platform-Action OpenBSD 6.9.
             # See https://marc.info/?l=openbsd-misc&m=163303405028215&w=2
             # It would be nice to run syspatch at startup, but it complains of `syspatch: cannot apply patches while reorder_kernel is running`
@@ -136,7 +136,7 @@ jobs:
             opam exec -- dune build --display=short
             opam exec -- dune runtest --display=short
             opam exec -- dune install
-            opam exec -- sh -c 'cat show_abi.ml | ocaml'
+            opam exec -- sh -c 'cat samples/show_abi.ml | ocaml'
 
   test-with-setup-ocaml:
     strategy:
@@ -154,7 +154,7 @@ jobs:
     # Confer: ocaml/setup-ocaml issue no. 529
     # Also:
     #  -> installed opam-depext.1.1.5
-      
+
     #   #===ERRORwhile compiling depext-cygwinports.0.0.9===========================#
     #   #context     2.0.10 | win32/x86_64 | ocaml-variants.4.13.1+mingw64c | git+https://github.com/fdopen/opam-repository-mingw.git#opam2
     #   #path        D:/a/dkml-c-probe/dkml-c-probe/_opam/.opam-switch/build/depext-cygwinports.0.0.9
@@ -168,7 +168,7 @@ jobs:
     #   # ** Fatal error: Cannot run cygpath -m "libmsvcrt" "libmsvcrt.lib" "libmsvcrt.dll.a" "libmsvcrt.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt.lib" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt.dll.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt.lib" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt.dll.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt.a" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt.lib" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt.dll.a" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt.a" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt.a" "/usr/x86_64-w64-mingw32/lib/libmsvcrt" "/usr/x86_64-w64-mingw32/lib/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/lib/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/lib/libmsvcrt.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt.a"
     #   # File "caml_startup", line 1:
     #   # Error: Error during linking (exit code 2)
-    #   # make: *** [Makefile:24: cygwin-install.exe] Error 2    
+    #   # make: *** [Makefile:24: cygwin-install.exe] Error 2
     continue-on-error: ${{ startsWith(matrix.os, 'windows-') }}
     steps:
       - name: Checkout code
@@ -201,7 +201,7 @@ jobs:
       - name: Install dkml-c-probe
         run: opam exec -- dune install
       - name: Display probe
-        run: opam exec -- sh -c 'cat show_abi.ml | ocaml'
+        run: opam exec -- sh -c 'cat samples/show_abi.ml | ocaml'
 
   setup-dkml:
     uses: "diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0"
@@ -234,7 +234,9 @@ jobs:
           - os: macos-latest
             abi-pattern: macos-darwin_all
             dkml-host-abi: darwin_x86_64
-            # crosscompile-dune-args: -x darwin_arm64
+            crosscompile-toolchain: darwin_arm64
+            crosscompile-dune-context: |
+              (context (default (targets native darwin_arm64)))
             default_shell: sh
             opam-root: /Users/runner/.opam
             bits: "64"
@@ -294,16 +296,60 @@ jobs:
           path: ${{ matrix.opam-root }}/download-cache
           key: ${{ matrix.dkml-host-abi }}
 
+      - name: Configure Opam for cross-compilation
+        if: matrix.crosscompile-dune-context
+        run: |
+          projectrundir=$(opamrun exec -- pwd)
+
+          # Inject [dune-workspace] into almost all Opam packages
+          dunecontext='${{ matrix.crosscompile-dune-context }}'
+          option_args=$(printf 'pre-build-commands=["%s" "%s" "%s" "%s"]' \
+            "$projectrundir/samples/crosscompiling-workspace-generator.sh" \
+            '%{name}%' \
+            '%{_:build}%/dune-workspace' \
+            "$dunecontext" \
+          )
+          opamrun option "$option_args"
+
+          # Add [dune-workspace] to dkml-c-probe (this package)
+          "$projectrundir/samples/crosscompiling-workspace-generator.sh" \
+            "dkml-c-probe" \
+            "dune-workspace" \
+            "$dunecontext"
+
+          # Each Opam package must install its cross-compiled libraries into Opam switch
+          option_args=$(printf 'post-install-commands=["%s" "%s" "%s" "%s" "%s" "%s" "%s" "%s"]' \
+            "$projectrundir/samples/crosscompiling-opam-installer.sh" \
+            "%{name}%-${{ matrix.crosscompile-toolchain }}.install" \
+            "%{name}%" \
+            "%{lib}%" \
+            "%{man}%" \
+            "%{prefix}%" \
+            "%{stublibs}%" \
+            "%{toplevel}%" \
+          )
+          opamrun option "$option_args"
+
+          # Diagnostics: Show the options
+          opamrun option
+      - name: Dune-ify non-Dune Opam dependencies
+        run: |
+          opamrun repository add dune-universe git+https://github.com/dune-universe/opam-overlays.git#master
+          opamrun pin astring   --no-action --yes -k version 0.8.5+dune
+          opamrun pin cmdliner  --no-action --yes -k version 1.1.1+dune
+          opamrun pin fmt       --no-action --yes -k version 0.8.9+dune
+          opamrun pin logs      --no-action --yes -k version 0.7.0+dune2
+          opamrun pin seq       --no-action --yes -k version base+dune
       - name: Install Opam dependencies
         run: opamrun install . --deps-only --with-test --yes
       - name: Build OCaml
-        run: opamrun exec -- dune build ${{ matrix.crosscompile-dune-args }} --display=short
+        run: opamrun exec -- dune build --display=short
       - name: Test OCaml
-        run: opamrun exec -- dune runtest ${{ matrix.crosscompile-dune-args }} --display=short
+        run: opamrun exec -- dune runtest --display=short
       - name: Install dkml-c-probe
-        run: opamrun exec -- dune install ${{ matrix.crosscompile-dune-args }}
+        run: opamrun install . --yes
       - name: Display probe of default toolchain
-        run: opamrun exec -- sh -c 'cat show_abi.ml | ocaml'
+        run: opamrun exec -- sh -c 'cat samples/show_abi.ml | ocaml'
       - name: Display source snippets of all toolchains
         run: |
           prefix=$(opamrun var prefix)

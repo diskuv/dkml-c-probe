@@ -14,7 +14,7 @@
   (package dkml-c-probe))
  (action
   (with-stdin-from
-   show_abi.ml
+   samples/show_abi.ml
    (run ocaml))))
 
 ; BEGIN HACK - Workaround unsupported ```console blocks

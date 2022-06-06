@@ -6,6 +6,8 @@
 * Avoid [compiler issues](https://github.com/owlbarn/eigen/issues/38) by
   defaulting to `Unknown` in the C header
 * Add `C_conf` module
+* Add OpenBSD, FreeBSD, NetBSD and DragonFly on x86_64 architectures
+* Add CI for cross-compiling on macOS
 
 ## 2.0.0
 
