@@ -14,43 +14,62 @@ jobs:
         os:
           - name: openbsd
             version: '6.8'
-          # 6.9 gives ...
-          # <><> Fetching repository information ><><><><><><><><><><><><><><><><><><><><><>
-          # Error:  Could not update repository "default": OpamDownload.Download_fail(_, "Download command failed: \"/usr/bin/ftp -o /tmp/opam-87092-8f3a45/index.tar.gz.part -U opam/2.1.2 -- https://opam.ocaml.org/index.tar.gz\" exited with code 1 \"TLS handshake failure: certificate verification failed: certificate has expired\"")          
           - name: openbsd
             version: '6.9'
+            # 6.9 gives ...
+            #   <><> Fetching repository information ><><><><><><><><><><><><><><><><><><><><><>
+            #   Error:  Could not update repository "default": OpamDownload.Download_fail(_, "Download command failed: \"/usr/bin/ftp -o /tmp/opam-87092-8f3a45/index.tar.gz.part -U opam/2.1.2 -- https://opam.ocaml.org/index.tar.gz\" exited with code 1 \"TLS handshake failure: certificate verification failed: certificate has expired\"")          
+            # because a syspatch has not been applied to the Cross-Platform-Action OpenBSD 6.9.
+            # See https://marc.info/?l=openbsd-misc&m=163303405028215&w=2
+            # It would be nice to run syspatch at startup, but it complains of `syspatch: cannot apply patches while reorder_kernel is running`
+            # and `run_as_root rcctl disable library_aslr` (https://www.facebook.com/groups/2210554563/posts/10157117341779564/) is ineffective
+            continue-on-error: yes
           - name: freebsd
             version: '13.0'
           # netbsd 9.2 does not start in VirtualBox as of 2022-06-05
           # - name: netbsd
           #   version: '9.2'
     name: Cross-Platform-Action / ${{ matrix.os.name }}-${{ matrix.os.version }}
+    continue-on-error: ${{ matrix.os.continue-on-error == 'yes' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Cache Opam root
+        uses: actions/cache@v3
+        with:
+          path: _opamroot
+          key: ${{ matrix.os.name }}-${{ matrix.os.version }}
+
+      - name: Cache Opam binaries
+        uses: actions/cache@v3
+        with:
+          path: _opambin
+          key: ${{ matrix.os.name }}-${{ matrix.os.version }}
+
       - name: Test in VirtualBox
         uses: cross-platform-actions/action@v0.5.0
-        env:
-          MY_ENV1: MY_ENV1
-          MY_ENV2: MY_ENV2
         with:
-          environment_variables: MY_ENV1 MY_ENV2
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
           shell: bash
           run: |
             uname -a
             usys=$(uname -s)
-            echo $usys
-            pwd
-
-            set -x
+            project_root=$(pwd)
+            export OPAMROOT="$project_root/_opamroot"
 
             run_as_root() {
               # doas on OpenBSD is not enabled (yet)
               sudo "$@"
             }
+
+            # minimize logging from cross-platform-actions/action post-step 'rsync -v' that
+            # transfers files out of virtual machine
+            install -d _build
+            trap 'rm -rf $project_root/_build' EXIT
+
+            set -x
 
             case "$usys" in
               OpenBSD)
@@ -72,24 +91,41 @@ jobs:
                 ;;
             esac
 
-            # <needs> curl
-            curl -fsSL https://github.com/ocaml/opam/releases/download/2.1.2/opam-full-2.1.2.tar.gz > opam-full-2.1.2.tar.gz
-            case "$usys" in
-              OpenBSD)
-                echo 'SHA256 (opam-full-2.1.2.tar.gz) = de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede' | sha256 -c
-                ;;
-              FreeBSD)
-                sha256 -c 'de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede' opam-full-2.1.2.tar.gz
-                ;;
-            esac
-            tar xvfz opam-full-2.1.2.tar.gz
+            # bin/opam cache miss?
+            opamver="2.1.2"
+            opamsha256="de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede"
+            opamcachemiss=OFF
+            if [ ! -x "$project_root/_opambin/bin/opam" ]; then
+              opamcachemiss=ON
+            else
+              opamactualver=$("$project_root/_opambin/bin/opam" --version || true)
+              if [ ! "$opamactualver" = "$opamver" ]; then
+                opamcachemiss=ON
+              fi
+            fi
+            if [ "$opamcachemiss" = ON ]; then
+              cd _build
 
-            # <needs> gmake bzip2
-            cd opam-full-2.1.2
-            gmake cold
-            run_as_root gmake cold-install
-            cd ..
-            rm -rf opam-full-2.1.2
+              # <needs> curl
+              curl -fsSL https://github.com/ocaml/opam/releases/download/$opamver/opam-full-$opamver.tar.gz > opam-full-$opamver.tar.gz
+              case "$usys" in
+                OpenBSD)
+                  echo "SHA256 (opam-full-$opamver.tar.gz) = de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede" | sha256 -c
+                  ;;
+                FreeBSD)
+                  sha256 -c 'de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede' opam-full-$opamver.tar.gz
+                  ;;
+              esac
+              tar xfz opam-full-$opamver.tar.gz
+
+              # <needs> gmake bzip2
+              cd opam-full-$opamver
+              gmake cold CONFIGURE_ARGS="--prefix '$project_root/_opambin'"
+              gmake cold-install
+
+              cd "$project_root"
+            fi
+            PATH="$project_root/_opambin/bin:$PATH"
 
             # <needs> gpatch gtar unzip
             opam init --auto-setup
@@ -103,7 +139,6 @@ jobs:
             opam exec -- sh -c 'cat show_abi.ml | ocaml'
 
   test-with-setup-ocaml:
-    if: "false"
     strategy:
       fail-fast: false
       matrix:
@@ -115,6 +150,26 @@ jobs:
           - "4.13.x"
     runs-on: ${{ matrix.os }}
     name: test-ocaml / ${{ matrix.os }}-${{ matrix.ocaml-compiler }}
+    # Windows on ocaml/setup-ocaml has been flaky ... let's not stop the Tests simply because it is flaky.
+    # Confer: ocaml/setup-ocaml issue no. 529
+    # Also:
+    #  -> installed opam-depext.1.1.5
+      
+    #   #===ERRORwhile compiling depext-cygwinports.0.0.9===========================#
+    #   #context     2.0.10 | win32/x86_64 | ocaml-variants.4.13.1+mingw64c | git+https://github.com/fdopen/opam-repository-mingw.git#opam2
+    #   #path        D:/a/dkml-c-probe/dkml-c-probe/_opam/.opam-switch/build/depext-cygwinports.0.0.9
+    #   #command     D:\cygwin\bin\make.exe -j2 all
+    #   #exit-code   2
+    #   #env-file    D:/.opam/log/depext-cygwinports-1604-d2d111.env
+    #   #output-file D:/.opam/log/depext-cygwinports-1604-d2d111.out
+    #   ### output ###
+    #   # ocamlopt -g  str.cmxa unix.cmxa config_file.mli config_file.ml run.mli run.ml cygwin.mli cygwin.ml -o cygwin-install.exe
+    #   # x86_64-w64-mingw32-gcc -O2 -fno-strict-aliasing -fwrapv -mms-bitfields  -s symlink.c -o pkg-config.exe
+    #   # ** Fatal error: Cannot run cygpath -m "libmsvcrt" "libmsvcrt.lib" "libmsvcrt.dll.a" "libmsvcrt.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt.lib" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt.dll.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\libmsvcrt.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt.lib" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt.dll.a" "D:/a/dkml-c-probe/dkml-c-probe/_opam/lib/ocaml\flexdll\libmsvcrt.a" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt.lib" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt.dll.a" "/usr/lib/gcc/x86_64-w64-mingw32/11/libmsvcrt.a" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/lib/x86_64-w64-mingw32/11/libmsvcrt.a" "/usr/x86_64-w64-mingw32/lib/libmsvcrt" "/usr/x86_64-w64-mingw32/lib/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/lib/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/lib/libmsvcrt.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/x86_64-w64-mingw32/11/libmsvcrt.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt.lib" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt.dll.a" "/usr/x86_64-w64-mingw32/sys-root/mingw/lib/libmsvcrt.a"
+    #   # File "caml_startup", line 1:
+    #   # Error: Error during linking (exit code 2)
+    #   # make: *** [Makefile:24: cygwin-install.exe] Error 2    
+    continue-on-error: ${{ startsWith(matrix.os, 'windows-') }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -149,14 +204,12 @@ jobs:
         run: opam exec -- sh -c 'cat show_abi.ml | ocaml'
 
   setup-dkml:
-    if: "false"
     uses: "diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0"
     permissions: {} # remove all rights of GITHUB_TOKEN when it is passed to setup-dkml.yml
     with:
       ocaml-compiler: 4.12.1
 
   test-with-setup-dkml:
-    if: "false"
     needs: setup-dkml
     strategy:
       fail-fast: false
@@ -181,6 +234,7 @@ jobs:
           - os: macos-latest
             abi-pattern: macos-darwin_all
             dkml-host-abi: darwin_x86_64
+            extra-dune-args: -x darwin_arm64
             default_shell: sh
             opam-root: /Users/runner/.opam
             bits: "64"
@@ -243,14 +297,14 @@ jobs:
       - name: Install Opam dependencies
         run: opamrun install . --deps-only --with-test --yes
       - name: Build OCaml
-        run: opamrun exec -- dune build --display=short
+        run: opamrun exec -- dune build ${{ matrix.extra-dune-args }} --display=short
       - name: Test OCaml
-        run: opamrun exec -- dune runtest --display=short
+        run: opamrun exec -- dune runtest ${{ matrix.extra-dune-args }} --display=short
       - name: Install dkml-c-probe
-        run: opamrun exec -- dune install
+        run: opamrun exec -- dune install ${{ matrix.extra-dune-args }}
       - name: Display probe of default toolchain
         run: opamrun exec -- sh -c 'cat show_abi.ml | ocaml'
       - name: Display source snippets of all toolchains
         run: |
-          prefix=$(opam var prefix)
+          prefix=$(opamrun var prefix)
           opamrun exec -- sh -c "cd '$prefix' && "'find . -name .opam-switch -prune -o -name c_abi.ml -print | xargs grep -A 1 "let get_"'
