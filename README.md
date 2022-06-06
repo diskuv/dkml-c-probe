@@ -39,7 +39,7 @@ which would mean using the `C_abi`:
 
 <!-- $MDX non-deterministic=command -->
 ```ocaml
-Lazy.force (Dkml_c_probe.C_abi.V3.get_abi)
+Dkml_c_probe.C_abi.V3.get_abi ()
 ```
 
 would result in `Ok Darwin_x86_64` or `Ok Darwin_arm64`, depending on which
@@ -204,9 +204,9 @@ module V3 :
       | Windows_arm64
       | Windows_x86
       | Windows_x86_64
-    val get_os : (t_os, string) result Lazy.t
-    val get_abi : (t_abi, string) result Lazy.t
-    val get_abi_name : (string, string) result Lazy.t
+    val get_os : unit -> (t_os, string) result
+    val get_abi : unit -> (t_abi, string) result
+    val get_abi_name : unit -> (string, string) result
   end
 ```
 

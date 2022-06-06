@@ -89,7 +89,7 @@ let load_from_dune_context_name ?(getenv = default_env_getter) ctxname =
   else create_error ()
 
 let load ?(getenv = default_env_getter) () =
-  let abi_name_res = Lazy.force C_abi.V3.get_abi_name in
+  let abi_name_res = C_abi.V3.get_abi_name () in
   match abi_name_res with
   | Ok abi_name -> load_from_findlib_toolchain ~getenv (Some abi_name)
   | Error msg -> Error msg

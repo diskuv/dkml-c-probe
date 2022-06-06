@@ -208,16 +208,16 @@ let adjust_pre_v3_abi ~abitypename ~abiname =
 let () =
   main ~name:"discover" (fun t ->
       let { ostypename; abitypename; abiname } = get_osinfo t in
-      let to_lazy s = "lazy (" ^ s ^ ")" in
+      let to_unit_fun s = "fun () -> " ^ s in
 
       let finish_module ~v ~ostypename ~abitypename ~abiname =
         [
-          {|  let get_os : (t_os, string) result Lazy.t = |}
-          ^ (result_to_string ostypename |> to_lazy);
-          {|  let get_abi : (t_abi, string) result Lazy.t = |}
-          ^ (result_to_string abitypename |> to_lazy);
-          {|  let get_abi_name : (string, string) result Lazy.t = |}
-          ^ (result_to_quoted_string abiname |> to_lazy);
+          {|  let get_os : unit -> (t_os, string) result = |}
+          ^ (result_to_string ostypename |> to_unit_fun);
+          {|  let get_abi : unit -> (t_abi, string) result = |}
+          ^ (result_to_string abitypename |> to_unit_fun);
+          {|  let get_abi_name : unit -> (string, string) result = |}
+          ^ (result_to_quoted_string abiname |> to_unit_fun);
           {|end (* module |} ^ v ^ {| *) |};
           {||};
         ]
