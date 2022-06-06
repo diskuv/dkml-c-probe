@@ -62,7 +62,7 @@ let get_osinfo t =
     | [ (_, String ("Linux" as x)) ] -> Result.ok x
     | [ (_, String ("OSX" as x)) ] -> Result.ok x
     | [ (_, String ("Windows" as x)) ] -> Result.ok x
-    | [ (_, String ("Unknown" as x)) ] -> Result.ok x
+    | [ (_, String ("UnknownOS" as x)) ] -> Result.ok x
     | _ ->
         Result.error
           ("Unknown operating system: no detection found in "
@@ -71,7 +71,7 @@ let get_osinfo t =
 
   let abitypename, abiname =
     match abi_define with
-    | [ (_, String ("unknown" as x)) ] -> (Result.ok "Unknown", Result.ok x)
+    | [ (_, String ("unknown_unknown" as x)) ] -> (Result.ok "Unknown_unknown", Result.ok x)
     | [ (_, String ("android_arm64v8a" as x)) ] ->
         (Result.ok "Android_arm64v8a", Result.ok x)
     | [ (_, String ("android_arm32v7a" as x)) ] ->
@@ -85,7 +85,7 @@ let get_osinfo t =
     | [ (_, String ("darwin_x86_64" as x)) ] ->
         (Result.ok "Darwin_x86_64", Result.ok x)
     | [ (_, String "darwin_ppc64") ] ->
-        (Result.ok "Unknown", Result.ok "unknown")
+        (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
     | [ (_, String ("linux_arm64" as x)) ] ->
         (Result.ok "Linux_arm64", Result.ok x)
     | [ (_, String ("linux_arm32v6" as x)) ] ->
@@ -95,8 +95,8 @@ let get_osinfo t =
     | [ (_, String ("linux_x86_64" as x)) ] ->
         (Result.ok "Linux_x86_64", Result.ok x)
     | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
-    | [ (_, String "linux_ppc64") ] -> (Result.ok "Unknown", Result.ok "unknown")
-    | [ (_, String "linux_s390x") ] -> (Result.ok "Unknown", Result.ok "unknown")
+    | [ (_, String "linux_ppc64") ] -> (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
+    | [ (_, String "linux_s390x") ] -> (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
     | [ (_, String ("windows_x86_64" as x)) ] ->
         (Result.ok "Windows_x86_64", Result.ok x)
     | [ (_, String ("windows_x86" as x)) ] ->
@@ -136,18 +136,18 @@ let adjust_pre_v2_abi ~abitypename ~abiname =
 
 let adjust_pre_v3_os ~ostypename =
   match ostypename with
-  | Result.Ok "Unknown" ->
+  | Result.Ok "UnknownOS" ->
       Result.error
-        "'Unknown' OS is only available in Target_context.V3 or later"
+        "'UnknownOS' OS is only available in Target_context.V3 or later"
   | Result.Ok v -> Result.ok v
   | Result.Error e -> Result.error e
 
 let adjust_pre_v3_abi ~abitypename ~abiname =
   match (abitypename, abiname) with
-  | Result.Ok "Unknown", _ | _, Result.Ok "Unknown" ->
+  | Result.Ok "Unknown_unknown", _ | _, Result.Ok "unknown_unknown" ->
       let err =
         Result.error
-          "'Unknown' ABI is only available in Target_context.V3 or later"
+          "'Unknown_unknown' ABI is only available in Target_context.V3 or later"
       in
       (err, err)
   | Result.Ok tn, Result.Ok n -> (Result.ok tn, Result.ok n)
@@ -235,15 +235,23 @@ let () =
         @ finish_module ~v:"V2" ~ostypename ~abitypename ~abiname
       in
 
-      (* V3 *)
+      (* V3.
+         
+         We did not introduce `t_os = Unknown | ...` and `t_abi = `Unknown | ...` because
+         dealing with the same type constructor name is hard (and confusing) in OCaml.
+         Instead we introduced `UnknownOS` and `Unknown_unknown`.
+
+         Also for parsing the ABI 'unknown_unknown' follows the ABI pattern of having at
+         least two terms separated by an underscore.
+       *)
       let lines =
         lines
         @ [
             {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
             {|module V3 = struct|};
-            {|  type t_os = Unknown | Android | IOS | Linux | OSX | Windows|};
+            {|  type t_os = UnknownOS | Android | IOS | Linux | OSX | Windows|};
             {|  type t_abi =
-              | Unknown
+              | Unknown_unknown
               | Android_arm64v8a
               | Android_arm32v7a
               | Android_x86

@@ -108,12 +108,12 @@
 #endif
 
 #ifndef DKML_OS_NAME
-#   define DKML_OS_NAME "Unknown"
-#   define DKML_OS_Unknown
+#   define DKML_OS_NAME "UnknownOS"
+#   define DKML_OS_UnknownOS
 #endif
 #ifndef DKML_ABI
-#   define DKML_ABI "Unknown"
-#   define DKML_ABI_unknown
+#   define DKML_ABI "unknown_unknown"
+#   define DKML_ABI_unknown_unknown
 #endif
 
 #endif /* DKMLCOMPILERPROBE_H */
