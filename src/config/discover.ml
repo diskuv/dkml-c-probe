@@ -57,12 +57,16 @@ let get_osinfo t =
 
   let ostypename =
     match os_define with
+    | [ (_, String ("UnknownOS" as x)) ] -> Result.ok x
     | [ (_, String ("Android" as x)) ] -> Result.ok x
+    | [ (_, String ("DragonFly" as x)) ] -> Result.ok x
+    | [ (_, String ("FreeBSD" as x)) ] -> Result.ok x
     | [ (_, String ("IOS" as x)) ] -> Result.ok x
     | [ (_, String ("Linux" as x)) ] -> Result.ok x
+    | [ (_, String ("NetBSD" as x)) ] -> Result.ok x
+    | [ (_, String ("OpenBSD" as x)) ] -> Result.ok x
     | [ (_, String ("OSX" as x)) ] -> Result.ok x
     | [ (_, String ("Windows" as x)) ] -> Result.ok x
-    | [ (_, String ("UnknownOS" as x)) ] -> Result.ok x
     | _ ->
         Result.error
           ("Unknown operating system: no detection found in "
@@ -71,7 +75,8 @@ let get_osinfo t =
 
   let abitypename, abiname =
     match abi_define with
-    | [ (_, String ("unknown_unknown" as x)) ] -> (Result.ok "Unknown_unknown", Result.ok x)
+    | [ (_, String ("unknown_unknown" as x)) ] ->
+        (Result.ok "Unknown_unknown", Result.ok x)
     | [ (_, String ("android_arm64v8a" as x)) ] ->
         (Result.ok "Android_arm64v8a", Result.ok x)
     | [ (_, String ("android_arm32v7a" as x)) ] ->
@@ -95,8 +100,10 @@ let get_osinfo t =
     | [ (_, String ("linux_x86_64" as x)) ] ->
         (Result.ok "Linux_x86_64", Result.ok x)
     | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
-    | [ (_, String "linux_ppc64") ] -> (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
-    | [ (_, String "linux_s390x") ] -> (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
+    | [ (_, String "linux_ppc64") ] ->
+        (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
+    | [ (_, String "linux_s390x") ] ->
+        (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
     | [ (_, String ("windows_x86_64" as x)) ] ->
         (Result.ok "Windows_x86_64", Result.ok x)
     | [ (_, String ("windows_x86" as x)) ] ->
@@ -105,6 +112,14 @@ let get_osinfo t =
         (Result.ok "Windows_arm64", Result.ok x)
     | [ (_, String ("windows_arm32" as x)) ] ->
         (Result.ok "Windows_arm32", Result.ok x)
+    | [ (_, String ("dragonfly_x86_64" as x)) ] ->
+        (Result.ok "DragonFly_x86_64", Result.ok x)
+    | [ (_, String ("freebsd_x86_64" as x)) ] ->
+        (Result.ok "FreeBSD_x86_64", Result.ok x)
+    | [ (_, String ("netbsd_x86_64" as x)) ] ->
+        (Result.ok "NetBSD_x86_64", Result.ok x)
+    | [ (_, String ("openbsd_x86_64" as x)) ] ->
+        (Result.ok "OpenBSD_x86_64", Result.ok x)
     | _ ->
         let msg =
           "Unknown ABI: no detection found in "
@@ -139,6 +154,17 @@ let adjust_pre_v3_os ~ostypename =
   | Result.Ok "UnknownOS" ->
       Result.error
         "'UnknownOS' OS is only available in Target_context.V3 or later"
+  | Result.Ok "OpenBSD" ->
+      Result.error
+        "'OpenBSD' OS is only available in Target_context.V3 or later"
+  | Result.Ok "FreeBSD" ->
+      Result.error
+        "'FreeBSD' OS is only available in Target_context.V3 or later"
+  | Result.Ok "NetBSD" ->
+      Result.error "'NetBSD' OS is only available in Target_context.V3 or later"
+  | Result.Ok "DragonFly" ->
+      Result.error
+        "'DragonFly' OS is only available in Target_context.V3 or later"
   | Result.Ok v -> Result.ok v
   | Result.Error e -> Result.error e
 
@@ -147,7 +173,33 @@ let adjust_pre_v3_abi ~abitypename ~abiname =
   | Result.Ok "Unknown_unknown", _ | _, Result.Ok "unknown_unknown" ->
       let err =
         Result.error
-          "'Unknown_unknown' ABI is only available in Target_context.V3 or later"
+          "'Unknown_unknown' ABI is only available in Target_context.V3 or \
+           later"
+      in
+      (err, err)
+  | Result.Ok "OpenBSD_x86_64", _ | _, Result.Ok "openbsd_x86_64" ->
+      let err =
+        Result.error
+          "'OpenBSD_x86_64' ABI is only available in Target_context.V3 or later"
+      in
+      (err, err)
+  | Result.Ok "FreeBSD_x86_64", _ | _, Result.Ok "freebsd_x86_64" ->
+      let err =
+        Result.error
+          "'FreeBSD_x86_64' ABI is only available in Target_context.V3 or later"
+      in
+      (err, err)
+  | Result.Ok "NetBSD_x86_64", _ | _, Result.Ok "netbsd_x86_64" ->
+      let err =
+        Result.error
+          "'NetBSD_x86_64' ABI is only available in Target_context.V3 or later"
+      in
+      (err, err)
+  | Result.Ok "DragonFly_x86_64", _ | _, Result.Ok "dragonfly_x86_64" ->
+      let err =
+        Result.error
+          "'DragonFly_x86_64' ABI is only available in Target_context.V3 or \
+           later"
       in
       (err, err)
   | Result.Ok tn, Result.Ok n -> (Result.ok tn, Result.ok n)
@@ -236,38 +288,53 @@ let () =
       in
 
       (* V3.
-         
+
          We did not introduce `t_os = Unknown | ...` and `t_abi = `Unknown | ...` because
          dealing with the same type constructor name is hard (and confusing) in OCaml.
          Instead we introduced `UnknownOS` and `Unknown_unknown`.
 
          Also for parsing the ABI 'unknown_unknown' follows the ABI pattern of having at
          least two terms separated by an underscore.
-       *)
+      *)
       let lines =
         lines
         @ [
             {|(** Enumerations of the operating system and the ABI, typically from an introspection of OCaml's native C compiler. *)|};
             {|module V3 = struct|};
-            {|  type t_os = UnknownOS | Android | IOS | Linux | OSX | Windows|};
+            {|  type t_os =
+              | UnknownOS
+              | Android
+              | DragonFly
+              | FreeBSD
+              | IOS
+              | Linux
+              | NetBSD
+              | OpenBSD
+              | OSX
+              | Windows
+              |};
             {|  type t_abi =
               | Unknown_unknown
-              | Android_arm64v8a
               | Android_arm32v7a
+              | Android_arm64v8a
               | Android_x86
               | Android_x86_64
               | Darwin_arm64
               | Darwin_x86_64
-              | Linux_arm64
+              | DragonFly_x86_64
+              | FreeBSD_x86_64
               | Linux_arm32v6
               | Linux_arm32v7
-              | Linux_x86_64
+              | Linux_arm64
               | Linux_x86
-              | Windows_x86_64
-              | Windows_x86
-              | Windows_arm64
+              | Linux_x86_64
+              | NetBSD_x86_64
+              | OpenBSD_x86_64
               | Windows_arm32
-          |};
+              | Windows_arm64
+              | Windows_x86
+              | Windows_x86_64
+              |};
           ]
         @ finish_module ~v:"V3" ~ostypename ~abitypename ~abiname
       in

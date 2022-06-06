@@ -172,24 +172,38 @@ $ ocaml samples/show_abi_signature.ml
 module V3 = Dkml_c_probe.C_abi.V3
 module V3 :
   sig
-    type t_os = Unknown | Android | IOS | Linux | OSX | Windows
+    type t_os =
+        UnknownOS
+      | Android
+      | DragonFly
+      | FreeBSD
+      | IOS
+      | Linux
+      | NetBSD
+      | OpenBSD
+      | OSX
+      | Windows
     type t_abi =
-        Unknown
-      | Android_arm64v8a
+        Unknown_unknown
       | Android_arm32v7a
+      | Android_arm64v8a
       | Android_x86
       | Android_x86_64
       | Darwin_arm64
       | Darwin_x86_64
-      | Linux_arm64
+      | DragonFly_x86_64
+      | FreeBSD_x86_64
       | Linux_arm32v6
       | Linux_arm32v7
-      | Linux_x86_64
+      | Linux_arm64
       | Linux_x86
-      | Windows_x86_64
-      | Windows_x86
-      | Windows_arm64
+      | Linux_x86_64
+      | NetBSD_x86_64
+      | OpenBSD_x86_64
       | Windows_arm32
+      | Windows_arm64
+      | Windows_x86
+      | Windows_x86_64
     val get_os : (t_os, string) result Lazy.t
     val get_abi : (t_abi, string) result Lazy.t
     val get_abi_name : (string, string) result Lazy.t
@@ -285,6 +299,36 @@ The header file will be available as the following expressions:
 #       define DKML_ABI "darwin_arm64"
 #       define DKML_ABI_darwin_arm64
 #   endif /* TARGET_OS_OSX, TARGET_OS_IOS */
+#elif defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+#   if __OpenBSD__
+#       define DKML_OS_NAME "OpenBSD"
+#       define DKML_OS_OpenBSD
+#       if __x86_64__
+#           define DKML_ABI "openbsd_x86_64"
+#           define DKML_ABI_openbsd_x86_64
+#       endif /* __x86_64__ */
+#   elif __FreeBSD__
+#       define DKML_OS_NAME "FreeBSD"
+#       define DKML_OS_FreeBSD
+#       if __x86_64__
+#           define DKML_ABI "freebsd_x86_64"
+#           define DKML_ABI_freebsd_x86_64
+#       endif /* __x86_64__ */
+#   elif __NetBSD__
+#       define DKML_OS_NAME "NetBSD"
+#       define DKML_OS_NetBSD
+#       if __x86_64__
+#           define DKML_ABI "netbsd_x86_64"
+#           define DKML_ABI_netbsd_x86_64
+#       endif /* __x86_64__ */
+#   elif __DragonFly__
+#       define DKML_OS_NAME "DragonFly"
+#       define DKML_OS_DragonFly
+#       if __x86_64__
+#           define DKML_ABI "dragonfly_x86_64"
+#           define DKML_ABI_dragonfly_x86_64
+#       endif /* __x86_64__ */
+#   endif /* __OpenBSD__, __FreeBSD__, __NetBSD__, __DragonFly__ */
 #elif __linux__
 #   if __ANDROID__
 #       define DKML_OS_NAME "Android"
@@ -349,12 +393,12 @@ The header file will be available as the following expressions:
 #endif
 
 #ifndef DKML_OS_NAME
-#   define DKML_OS_NAME "Unknown"
-#   define DKML_OS_Unknown
+#   define DKML_OS_NAME "UnknownOS"
+#   define DKML_OS_UnknownOS
 #endif
 #ifndef DKML_ABI
-#   define DKML_ABI "Unknown"
-#   define DKML_ABI_unknown
+#   define DKML_ABI "unknown_unknown"
+#   define DKML_ABI_unknown_unknown
 #endif
 
 #endif /* DKMLCOMPILERPROBE_H */
