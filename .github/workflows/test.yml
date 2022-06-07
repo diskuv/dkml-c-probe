@@ -296,10 +296,51 @@ jobs:
           path: ${{ matrix.opam-root }}/download-cache
           key: ${{ matrix.dkml-host-abi }}
 
+      - name: Dune-ify non-Dune Opam dependencies
+        run: |
+          opamrun repository add dune-universe git+https://github.com/dune-universe/opam-overlays.git#master
+          opamrun pin astring   --no-action --yes -k version 0.8.5+dune
+          opamrun pin cmdliner  --no-action --yes -k version 1.1.1+dune
+          opamrun pin fmt       --no-action --yes -k version 0.8.9+dune
+          opamrun pin logs      --no-action --yes -k version 0.7.0+dune2
+          opamrun pin seq       --no-action --yes -k version base+dune
+
+      - name: Cache Opam binaries
+        uses: actions/cache@v3
+        with:
+          path: _opambin
+          key: ${{ matrix.dkml-host-abi }}
+
       - name: Configure Opam for cross-compilation
         if: matrix.crosscompile-dune-context
         run: |
           projectrundir=$(opamrun exec -- pwd)
+
+          # Create / cache opam-installer which is not always present from setup-dkml.yml
+          if [ ! -x _opambin/bin/opam-installer ] && [ ! -x _opambin/bin/opam-installer.exe ]; then
+            # Get the binary
+            opamrun install opam-installer --yes
+            opaminstaller="$(opamrun var opam-installer:bin)/opam-installer"
+            # Copy the binary
+            install -d _opambin/bin
+            if [ -x "$opaminstaller.exe" ]; then
+              install "$opaminstaller.exe" _opambin/bin/opam-installer.exe
+            else
+              install "$opaminstaller" _opambin/bin/opam-installer
+            fi
+            # Remove all packages which just got installed (is there any easy way to do that?);
+            # technically we only need to remove those that should cross-compiled later.
+            # But for consistency between cache hit and cache miss, better to remove everything
+            # installed during `opam install opam-installer`.
+            opamrun remove cmdliner cppo ocamlgraph opam-file-format re seq stdlib-shims --yes
+            opamrun list
+          fi
+          opaminstaller=$projectrundir/_opambin/bin/opam-installer
+
+          # Install ocamlfind since without it opam-installer can give errors trying
+          # to find the `ocamlfind` executable
+          opamrun install ocamlfind --yes
+          opamrun remove cmdliner seq --yes
 
           # Inject [dune-workspace] into almost all Opam packages
           dunecontext='${{ matrix.crosscompile-dune-context }}'
@@ -318,8 +359,9 @@ jobs:
             "$dunecontext"
 
           # Each Opam package must install its cross-compiled libraries into Opam switch
-          option_args=$(printf 'post-install-commands=["%s" "%s" "%s" "%s" "%s" "%s" "%s" "%s"]' \
+          option_args=$(printf 'post-install-commands=["%s" "%s" "%s" "%s" "%s" "%s" "%s" "%s" "%s"]' \
             "$projectrundir/samples/crosscompiling-opam-installer.sh" \
+            "$opaminstaller" \
             "%{name}%-${{ matrix.crosscompile-toolchain }}.install" \
             "%{name}%" \
             "%{lib}%" \
@@ -332,14 +374,7 @@ jobs:
 
           # Diagnostics: Show the options
           opamrun option
-      - name: Dune-ify non-Dune Opam dependencies
-        run: |
-          opamrun repository add dune-universe git+https://github.com/dune-universe/opam-overlays.git#master
-          opamrun pin astring   --no-action --yes -k version 0.8.5+dune
-          opamrun pin cmdliner  --no-action --yes -k version 1.1.1+dune
-          opamrun pin fmt       --no-action --yes -k version 0.8.9+dune
-          opamrun pin logs      --no-action --yes -k version 0.7.0+dune2
-          opamrun pin seq       --no-action --yes -k version base+dune
+
       - name: Install Opam dependencies
         run: opamrun install . --deps-only --with-test --yes
       - name: Build OCaml
@@ -350,7 +385,8 @@ jobs:
         run: opamrun install . --yes
       - name: Display probe of default toolchain
         run: opamrun exec -- sh -c 'cat samples/show_abi.ml | ocaml'
-      - name: Display source snippets of all toolchains
+      - name: Display source for cross-compiled toolchain
+        if: matrix.crosscompile-toolchain
         run: |
           prefix=$(opamrun var prefix)
-          opamrun exec -- sh -c "cd '$prefix' && "'find . -name .opam-switch -prune -o -name c_abi.ml -print | xargs grep -A 1 "let get_"'
+          opamrun exec -- cat "$prefix/${{ matrix.crosscompile-toolchain }}-sysroot/lib/dkml-c-probe/c_abi.ml"
