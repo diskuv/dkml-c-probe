@@ -1,5 +1,6 @@
 #!/bin/sh
 # usage: crosscompiling-opam-installer.sh \
+#   "$(opam var opam-installer-bin)/opam-installer" \
 #   "%{name}%-<<TOOLCHAIN>>.install" \
 #   "%{name}%" \
 #   "%{lib}%" \
@@ -9,6 +10,8 @@
 #   "%{toplevel}%"
 # where <<TOOLCHAIN>> is darwin_arm64 or another target ABI.
 
+opam_installer=$1
+shift
 install_file=$1
 shift
 name=$1
@@ -29,7 +32,7 @@ if [ ! -e "$install_file" ]; then
     exit 0
 fi
 
-exec opam-installer \
+exec "$opam_installer" \
     --install "$install_file" \
     --name="$name" \
     --libdir="$libdir" \
