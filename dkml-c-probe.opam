@@ -2,9 +2,12 @@
 opam-version: "2.0"
 version: "3.0.0"
 synopsis:
-  "Cross-compiler friendly characterizations of the OCaml's native C compiler"
-description:
-  "Using the C compiler of ocamlopt -config, which may be a cross-compiler, vends an OCaml module with enumerations of the target operating system and ABI, and a C header that introspects the same at compile time"
+  "Cross-compiler friendly ABI and library discovery for OCaml's native C compilers"
+description: """
+dkml-c-probe simplifies the creation of cross-compiling compatible foreign C stub code. It includes two components:
+
+C_abi: Introspects OCaml's native C compiler, including cross-compilers, to determine the ABI those C compilers will generate
+C_conf: Supplies flags to C compilers and OCaml tools that specify the locations of C headers and C libraries"""
 maintainer: ["opensource+diskuv-ocaml@support.diskuv.com"]
 authors: ["Diskuv, Inc. <opensource+diskuv-ocaml@support.diskuv.com>"]
 license: "Apache-2.0"
