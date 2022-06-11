@@ -205,7 +205,11 @@ jobs:
 
   setup-dkml:
     uses: "diskuv/dkml-workflows/.github/workflows/setup-dkml.yml@v0"
-    permissions: {} # remove all rights of GITHUB_TOKEN when it is passed to setup-dkml.yml
+    permissions:
+      #   By explicitly setting at least one permission, all other permissions
+      #   are set to none. setup-dkml.yml does not need access to your code!
+      #   Verify in 'Set up job > GITHUB_TOKEN permissions'.
+      actions: none
     with:
       ocaml-compiler: 4.12.1
 
