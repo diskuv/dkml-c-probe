@@ -7,6 +7,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      # ocaml/setup-ocaml/deploy-doc pushes to the gh-pages branch
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
