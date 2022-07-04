@@ -56,18 +56,13 @@ jobs:
           run: |
             uname -a
             usys=$(uname -s)
-            project_root=$(pwd)
-            export OPAMROOT="$project_root/_opamroot"
+            workspace_root=$(pwd)
+            export OPAMROOT="$workspace_root/_opamroot"
 
             run_as_root() {
               # doas on OpenBSD is not enabled (yet)
               sudo "$@"
             }
-
-            # minimize cross-platform-actions/action post-step 'rsync' that
-            # transfers files out of virtual machine
-            install -d _build
-            trap 'rm -rf $project_root/_build' EXIT
 
             set -x
 
@@ -95,17 +90,15 @@ jobs:
             opamver="2.1.2"
             opamsha256="de1e3efffd5942e0101ef83dcdead548cc65a93e13986aecb4a264a059457ede"
             opamcachemiss=OFF
-            if [ ! -x "$project_root/_opambin/bin/opam" ]; then
+            if [ ! -x "$workspace_root/_opambin/bin/opam" ]; then
               opamcachemiss=ON
             else
-              opamactualver=$("$project_root/_opambin/bin/opam" --version || true)
+              opamactualver=$("$workspace_root/_opambin/bin/opam" --version || true)
               if [ ! "$opamactualver" = "$opamver" ]; then
                 opamcachemiss=ON
               fi
             fi
             if [ "$opamcachemiss" = ON ]; then
-              cd _build
-
               # <needs> curl
               curl -fsSL https://github.com/ocaml/opam/releases/download/$opamver/opam-full-$opamver.tar.gz > opam-full-$opamver.tar.gz
               case "$usys" in
@@ -117,15 +110,21 @@ jobs:
                   ;;
               esac
               tar xfz opam-full-$opamver.tar.gz
+              rm -f opam-full-$opamver.tar.gz
 
               # <needs> gmake bzip2
               cd opam-full-$opamver
-              gmake cold CONFIGURE_ARGS="--prefix '$project_root/_opambin'"
+              gmake cold CONFIGURE_ARGS="--prefix '$workspace_root/_opambin'"
               gmake cold-install
-
-              cd "$project_root"
+              cd "$workspace_root"
+              rm -rf opam-full-$opamver
             fi
-            PATH="$project_root/_opambin/bin:$PATH"
+            PATH="$workspace_root/_opambin/bin:$PATH"
+
+            # minimize cross-platform-actions/action post-step 'rsync' that
+            # transfers files out of virtual machine
+            install -d "$workspace_root/_build"
+            trap 'rm -rf $workspace_root/_build' EXIT
 
             # <needs> gpatch gtar unzip
             opam init --auto-setup
@@ -133,9 +132,9 @@ jobs:
             # <needs> git
             opam install . --deps-only --with-test --yes
 
-            opam exec -- dune build --display=short
-            opam exec -- dune runtest --display=short
-            opam exec -- dune install
+            opam exec -- dune build --root "$workspace_root" --display=short
+            opam exec -- dune runtest --root "$workspace_root" --display=short
+            opam exec -- dune install --root "$workspace_root"
             opam exec -- sh -c 'cat samples/show_abi.ml | ocaml'
 
   test-with-setup-ocaml:
