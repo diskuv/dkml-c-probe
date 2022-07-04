@@ -48,7 +48,7 @@ jobs:
           key: ${{ matrix.os.name }}-${{ matrix.os.version }}
 
       - name: Test in VirtualBox
-        uses: cross-platform-actions/action@v0.5.0
+        uses: cross-platform-actions/action@v0.6.1
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
@@ -64,7 +64,7 @@ jobs:
               sudo "$@"
             }
 
-            # minimize logging from cross-platform-actions/action post-step 'rsync -v' that
+            # minimize cross-platform-actions/action post-step 'rsync' that
             # transfers files out of virtual machine
             install -d _build
             trap 'rm -rf $project_root/_build' EXIT
