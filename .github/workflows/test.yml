@@ -48,7 +48,7 @@ jobs:
           key: ${{ matrix.os.name }}-${{ matrix.os.version }}
 
       - name: Test in VirtualBox
-        uses: cross-platform-actions/action@v0.6.1
+        uses: cross-platform-actions/action@v0.6.2
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
