@@ -20,7 +20,7 @@ jobs:
           - name: openbsd
             version: '6.8'
           - name: openbsd
-            version: '6.9'
+            version: '7.1'
             # 6.9 gives ...
             #   <><> Fetching repository information ><><><><><><><><><><><><><><><><><><><><><>
             #   Error:  Could not update repository "default": OpamDownload.Download_fail(_, "Download command failed: \"/usr/bin/ftp -o /tmp/opam-87092-8f3a45/index.tar.gz.part -U opam/2.1.2 -- https://opam.ocaml.org/index.tar.gz\" exited with code 1 \"TLS handshake failure: certificate verification failed: certificate has expired\"")
@@ -78,8 +78,8 @@ jobs:
                 run_as_root pkg_add gpatch
                 # 6.8
                 run_as_root pkg_add gtar-1.32p1 unzip-6.0p13 || true
-                # 6.9
-                run_as_root pkg_add gtar-1.34 unzip-6.0p14 || true
+                # 6.9 and 7.1
+                run_as_root pkg_add gtar-1.34 unzip-6.0p14 || true                
                 run_as_root pkg_add git
                 ;;
               FreeBSD)
