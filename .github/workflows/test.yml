@@ -12,6 +12,7 @@ jobs:
     #   is deprecated (https://github.com/actions/runner-images/issues/5583)
     # - virtualbox added to macOS-12 in https://github.com/actions/runner-images/pull/5594
     runs-on: macos-12
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
