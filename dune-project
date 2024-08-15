@@ -2,7 +2,7 @@
 
 (name dkml-c-probe)
 
-(version 3.0.0)
+(version 3.1.0)
 
 (using mdx 0.1)
 

@@ -1,3 +1,8 @@
+## 3.1.0
+
+* Fix bug with eol=CRLF not recognized on macOS .gitattributes
+* Allow cross-compile dune build step
+
 ## 3.0.0
 
 * Remove unnecessary `rresult`
