@@ -73,7 +73,7 @@ let get_osinfo t =
           ("Unknown operating system: no detection found in "
          ^ Dkml_compiler_probe_c_header.filename)
   in
-  let osname = Result.map String.lowercase_ascii ostypename in
+  let osname = (* same casing *) ostypename in
 
   let abitypename =
     match abi_define with

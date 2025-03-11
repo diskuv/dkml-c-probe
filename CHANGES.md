@@ -1,6 +1,9 @@
 ## 3.2.0
 
-* Add osname
+* Add `get_os_name`. Unlike the ABI name the operating system name is mixed-case
+  (ex. `Windows`) to aid in scenarios where the operating system name is
+  presented to users. The ABI name is canonically lowercase and will stay
+  that way.
 
 ## 3.1.0
 
