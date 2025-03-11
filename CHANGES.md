@@ -1,3 +1,7 @@
+## 3.2.0
+
+* Add osname
+
 ## 3.1.0
 
 * Fix bug with eol=CRLF not recognized on macOS .gitattributes

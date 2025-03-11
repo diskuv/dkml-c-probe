@@ -34,6 +34,7 @@ type t_abi =
 
 type osinfo = {
   ostypename : (string, string) result;
+  osname: (string, string) result;
   abitypename : (string, string) result;
   abiname : (string, string) result;
 }
@@ -72,63 +73,65 @@ let get_osinfo t =
           ("Unknown operating system: no detection found in "
          ^ Dkml_compiler_probe_c_header.filename)
   in
+  let osname = Result.map String.lowercase_ascii ostypename in
 
-  let abitypename, abiname =
+  let abitypename =
     match abi_define with
-    | [ (_, String ("unknown_unknown" as x)) ] ->
-        (Result.ok "Unknown_unknown", Result.ok x)
-    | [ (_, String ("android_arm64v8a" as x)) ] ->
-        (Result.ok "Android_arm64v8a", Result.ok x)
-    | [ (_, String ("android_arm32v7a" as x)) ] ->
-        (Result.ok "Android_arm32v7a", Result.ok x)
-    | [ (_, String ("android_x86" as x)) ] ->
-        (Result.ok "Android_x86", Result.ok x)
-    | [ (_, String ("android_x86_64" as x)) ] ->
-        (Result.ok "Android_x86_64", Result.ok x)
-    | [ (_, String ("darwin_arm64" as x)) ] ->
-        (Result.ok "Darwin_arm64", Result.ok x)
-    | [ (_, String ("darwin_x86_64" as x)) ] ->
-        (Result.ok "Darwin_x86_64", Result.ok x)
+    | [ (_, String ("unknown_unknown")) ] ->
+        (Result.ok "Unknown_unknown")
+    | [ (_, String ("android_arm64v8a")) ] ->
+        (Result.ok "Android_arm64v8a")
+    | [ (_, String ("android_arm32v7a")) ] ->
+        (Result.ok "Android_arm32v7a")
+    | [ (_, String ("android_x86")) ] ->
+        (Result.ok "Android_x86")
+    | [ (_, String ("android_x86_64")) ] ->
+        (Result.ok "Android_x86_64")
+    | [ (_, String ("darwin_arm64")) ] ->
+        (Result.ok "Darwin_arm64")
+    | [ (_, String ("darwin_x86_64")) ] ->
+        (Result.ok "Darwin_x86_64")
     | [ (_, String "darwin_ppc64") ] ->
-        (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
-    | [ (_, String ("linux_arm64" as x)) ] ->
-        (Result.ok "Linux_arm64", Result.ok x)
-    | [ (_, String ("linux_arm32v6" as x)) ] ->
-        (Result.ok "Linux_arm32v6", Result.ok x)
-    | [ (_, String ("linux_arm32v7" as x)) ] ->
-        (Result.ok "Linux_arm32v7", Result.ok x)
-    | [ (_, String ("linux_x86_64" as x)) ] ->
-        (Result.ok "Linux_x86_64", Result.ok x)
-    | [ (_, String ("linux_x86" as x)) ] -> (Result.ok "Linux_x86", Result.ok x)
+        (Result.ok "Unknown_unknown")
+    | [ (_, String ("linux_arm64")) ] ->
+        (Result.ok "Linux_arm64")
+    | [ (_, String ("linux_arm32v6")) ] ->
+        (Result.ok "Linux_arm32v6")
+    | [ (_, String ("linux_arm32v7")) ] ->
+        (Result.ok "Linux_arm32v7")
+    | [ (_, String ("linux_x86_64")) ] ->
+        (Result.ok "Linux_x86_64")
+    | [ (_, String ("linux_x86")) ] -> (Result.ok "Linux_x86")
     | [ (_, String "linux_ppc64") ] ->
-        (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
+        (Result.ok "Unknown_unknown")
     | [ (_, String "linux_s390x") ] ->
-        (Result.ok "Unknown_unknown", Result.ok "unknown_unknown")
-    | [ (_, String ("windows_x86_64" as x)) ] ->
-        (Result.ok "Windows_x86_64", Result.ok x)
-    | [ (_, String ("windows_x86" as x)) ] ->
-        (Result.ok "Windows_x86", Result.ok x)
-    | [ (_, String ("windows_arm64" as x)) ] ->
-        (Result.ok "Windows_arm64", Result.ok x)
-    | [ (_, String ("windows_arm32" as x)) ] ->
-        (Result.ok "Windows_arm32", Result.ok x)
-    | [ (_, String ("dragonfly_x86_64" as x)) ] ->
-        (Result.ok "DragonFly_x86_64", Result.ok x)
-    | [ (_, String ("freebsd_x86_64" as x)) ] ->
-        (Result.ok "FreeBSD_x86_64", Result.ok x)
-    | [ (_, String ("netbsd_x86_64" as x)) ] ->
-        (Result.ok "NetBSD_x86_64", Result.ok x)
-    | [ (_, String ("openbsd_x86_64" as x)) ] ->
-        (Result.ok "OpenBSD_x86_64", Result.ok x)
+        (Result.ok "Unknown_unknown")
+    | [ (_, String ("windows_x86_64")) ] ->
+        (Result.ok "Windows_x86_64")
+    | [ (_, String ("windows_x86")) ] ->
+        (Result.ok "Windows_x86")
+    | [ (_, String ("windows_arm64")) ] ->
+        (Result.ok "Windows_arm64")
+    | [ (_, String ("windows_arm32")) ] ->
+        (Result.ok "Windows_arm32")
+    | [ (_, String ("dragonfly_x86_64")) ] ->
+        (Result.ok "DragonFly_x86_64")
+    | [ (_, String ("freebsd_x86_64")) ] ->
+        (Result.ok "FreeBSD_x86_64")
+    | [ (_, String ("netbsd_x86_64")) ] ->
+        (Result.ok "NetBSD_x86_64")
+    | [ (_, String ("openbsd_x86_64")) ] ->
+        (Result.ok "OpenBSD_x86_64")
     | _ ->
         let msg =
           "Unknown ABI: no detection found in "
           ^ Dkml_compiler_probe_c_header.filename
         in
-        (Result.error msg, Result.error msg)
+        (Result.error msg)
   in
+  let abiname = Result.map String.lowercase_ascii abitypename in
 
-  { ostypename; abitypename; abiname }
+  { ostypename; osname; abitypename; abiname }
 
 let result_to_string = function
   | Result.Ok v -> "Result.ok (" ^ v ^ ")"
@@ -149,24 +152,25 @@ let adjust_pre_v2_abi ~abitypename ~abiname =
   | Result.Ok tn, Result.Ok n -> (Result.ok tn, Result.ok n)
   | Result.Error e, _ | _, Result.Error e -> (Result.error e, Result.error e)
 
-let adjust_pre_v3_os ~ostypename =
-  match ostypename with
-  | Result.Ok "UnknownOS" ->
-      Result.error
-        "'UnknownOS' OS is only available in Target_context.V3 or later"
-  | Result.Ok "OpenBSD" ->
-      Result.error
-        "'OpenBSD' OS is only available in Target_context.V3 or later"
-  | Result.Ok "FreeBSD" ->
-      Result.error
-        "'FreeBSD' OS is only available in Target_context.V3 or later"
-  | Result.Ok "NetBSD" ->
-      Result.error "'NetBSD' OS is only available in Target_context.V3 or later"
-  | Result.Ok "DragonFly" ->
-      Result.error
-        "'DragonFly' OS is only available in Target_context.V3 or later"
-  | Result.Ok v -> Result.ok v
-  | Result.Error e -> Result.error e
+let adjust_pre_v3_os ~ostypename ~osname =
+  match ostypename, osname with
+  | Result.Ok "UnknownOS", _ ->
+      let e = "'UnknownOS' OS is only available in Target_context.V3 or later" in
+      Result.Error e, Result.Error e
+  | Result.Ok "OpenBSD", _ ->
+      let e = "'OpenBSD' OS is only available in Target_context.V3 or later" in
+      Result.Error e, Result.Error e
+  | Result.Ok "FreeBSD", _ ->
+      let e = "'FreeBSD' OS is only available in Target_context.V3 or later" in
+      Result.Error e, Result.Error e
+  | Result.Ok "NetBSD", _ ->
+      let e =  "'NetBSD' OS is only available in Target_context.V3 or later" in
+      Result.Error e, Result.Error e
+  | Result.Ok "DragonFly", _ ->
+      let e = "'DragonFly' OS is only available in Target_context.V3 or later" in
+      Result.Error e, Result.Error e
+  | Result.Ok tn, Result.Ok n -> (Result.ok tn, Result.ok n)
+  | Result.Error e, _ | _, Result.Error e -> (Result.error e, Result.error e)
 
 let adjust_pre_v3_abi ~abitypename ~abiname =
   match (abitypename, abiname) with
@@ -207,13 +211,15 @@ let adjust_pre_v3_abi ~abitypename ~abiname =
 
 let () =
   main ~name:"discover" (fun t ->
-      let { ostypename; abitypename; abiname } = get_osinfo t in
+      let { ostypename; osname; abitypename; abiname } = get_osinfo t in
       let to_unit_fun s = "fun () -> " ^ s in
 
-      let finish_module ~v ~ostypename ~abitypename ~abiname =
+      let finish_module ~v ~ostypename ~osname ~abitypename ~abiname =
         [
           {|  let get_os : unit -> (t_os, string) result = |}
           ^ (result_to_string ostypename |> to_unit_fun);
+          {|  let get_os_name : unit -> (string, string) result = |}
+          ^ (result_to_quoted_string osname |> to_unit_fun);
           {|  let get_abi : unit -> (t_abi, string) result = |}
           ^ (result_to_string abitypename |> to_unit_fun);
           {|  let get_abi_name : unit -> (string, string) result = |}
@@ -231,7 +237,7 @@ let () =
       let lines =
         let abitypename, abiname = adjust_pre_v2_abi ~abitypename ~abiname in
         let abitypename, abiname = adjust_pre_v3_abi ~abitypename ~abiname in
-        let ostypename = adjust_pre_v3_os ~ostypename in
+        let ostypename, osname = adjust_pre_v3_os ~ostypename ~osname in
         lines
         @ [
             {|(** New applications should use the {!V3} module instead. *)|};
@@ -254,13 +260,13 @@ let () =
               | Windows_arm32
           |};
           ]
-        @ finish_module ~v:"V1" ~ostypename ~abitypename ~abiname
+        @ finish_module ~v:"V1" ~ostypename ~osname ~abitypename ~abiname
       in
 
       (* V2 *)
       let lines =
         let abitypename, abiname = adjust_pre_v3_abi ~abitypename ~abiname in
-        let ostypename = adjust_pre_v3_os ~ostypename in
+        let ostypename, osname = adjust_pre_v3_os ~ostypename ~osname in
         lines
         @ [
             {|(** New applications should use the {!V3} module instead. *)|};
@@ -284,7 +290,7 @@ let () =
               | Windows_arm32
           |};
           ]
-        @ finish_module ~v:"V2" ~ostypename ~abitypename ~abiname
+        @ finish_module ~v:"V2" ~ostypename ~osname ~abitypename ~abiname
       in
 
       (* V3.
@@ -336,7 +342,7 @@ let () =
               | Windows_x86_64
               |};
           ]
-        @ finish_module ~v:"V3" ~ostypename ~abitypename ~abiname
+        @ finish_module ~v:"V3" ~ostypename ~osname ~abitypename ~abiname
       in
 
       write_lines "c_abi.ml" lines)
