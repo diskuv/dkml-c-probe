@@ -169,7 +169,6 @@ OCaml API documentation is at https://diskuv.github.io/dkml-c-probe/dkml-c-probe
 
 ```console
 $ ocaml samples/show_abi_signature.ml
-module V3 = Dkml_c_probe.C_abi.V3
 module V3 :
   sig
     type t_os =
@@ -205,6 +204,7 @@ module V3 :
       | Windows_x86
       | Windows_x86_64
     val get_os : unit -> (t_os, string) result
+    val get_os_name : unit -> (string, string) result
     val get_abi : unit -> (t_abi, string) result
     val get_abi_name : unit -> (string, string) result
   end
